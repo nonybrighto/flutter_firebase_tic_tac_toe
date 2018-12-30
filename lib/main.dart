@@ -19,11 +19,6 @@ class MyApp extends StatelessWidget {
           body1: TextStyle(
             color: Colors.white
           ),
-          button: TextStyle(
-            color: Colors.green, // This is not working.
-            fontSize: 30.0,
-            fontWeight: FontWeight.bold
-          )
         )
       ),
       home:MenuPage(),
