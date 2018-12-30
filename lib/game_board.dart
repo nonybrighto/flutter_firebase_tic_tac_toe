@@ -10,7 +10,6 @@ class GameBoard extends StatefulWidget {
 class _GameBoardState extends State<GameBoard> {
   @override
   Widget build(BuildContext context) {
-
    
     return Scaffold(
       backgroundColor: Color(0XFF212845),

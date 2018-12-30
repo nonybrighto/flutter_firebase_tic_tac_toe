@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_firebase_tic_tac_toe/game_board.dart';
+import 'package:flutter_firebase_tic_tac_toe/users_board.dart';
 
 class MenuPage extends StatefulWidget {
   @override
@@ -42,7 +43,11 @@ class _MenuPageState extends State<MenuPage> {
                 _menuButton('PLAY WITH COMPUTER', (){
                   Navigator.of(context).push(MaterialPageRoute(builder:(index)=> GameBoard()));
                 }),
-                _menuButton('PLAY WITH USER', (){}),
+                _menuButton('PLAY WITH USER', 
+                  (){
+                  Navigator.of(context).push(MaterialPageRoute(builder:(index)=> UsersBoard()));
+                }
+                ),
                 _menuButton('HIGH SCORE', (){}),
               ],
             ),
