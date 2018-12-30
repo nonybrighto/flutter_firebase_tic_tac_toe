@@ -24,10 +24,8 @@ class _UsersBoardState extends State<UsersBoard> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0XFF212845),
         title: Text('Tic Tac Toe users'),
       ),
-      backgroundColor: Color(0XFF212845),
       body: ListView.builder(
         itemCount: users.length,
         itemBuilder: (context, index,){

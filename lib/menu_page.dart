@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_firebase_tic_tac_toe/game_board.dart';
+import 'package:flutter_firebase_tic_tac_toe/high_score_board.dart';
 import 'package:flutter_firebase_tic_tac_toe/users_board.dart';
 
 class MenuPage extends StatefulWidget {
@@ -33,7 +34,6 @@ class _MenuPageState extends State<MenuPage> {
                 Text(
                   'Tic Tac Toe',
                   style: TextStyle(
-                    color: Colors.white,
                     fontSize: 50.0,
                     fontWeight: FontWeight.bold,),
                 ),
@@ -48,7 +48,9 @@ class _MenuPageState extends State<MenuPage> {
                   Navigator.of(context).push(MaterialPageRoute(builder:(index)=> UsersBoard()));
                 }
                 ),
-                _menuButton('HIGH SCORE', (){}),
+                _menuButton('HIGH SCORE', (){
+                   Navigator.of(context).push(MaterialPageRoute(builder:(index)=> HighScoreBoard()));
+                }),
               ],
             ),
           )
@@ -77,6 +79,7 @@ _bigLetter(String letter) {
   return Text(
     letter,
     style: TextStyle(
+      color: Colors.black,
       fontSize: 350.0,
     ),
   );

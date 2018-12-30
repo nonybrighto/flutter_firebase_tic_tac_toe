@@ -12,7 +12,6 @@ class _GameBoardState extends State<GameBoard> {
   Widget build(BuildContext context) {
    
     return Scaffold(
-      backgroundColor: Color(0XFF212845),
       body: Padding(
         padding: const EdgeInsets.fromLTRB(20.0, 40.0, 20.0, 20.0),
         child: Column(
@@ -23,12 +22,12 @@ class _GameBoardState extends State<GameBoard> {
                 _scoreBox('dddd', 'John', 3),
                 Text(
                   'VS',
-                  style: TextStyle(color: Colors.white, fontSize: 45.0),
+                  style: TextStyle(fontSize: 45.0),
                 ),
                 _scoreBox('dddd', 'Mary', 5),
               ],
             ),
-            Text("John's turn", style: TextStyle(color: Color(0XFFF8D320), fontSize: 20.0),),
+            Text("John's turn", style: TextStyle(color:Theme.of(context).accentColor, fontSize: 20.0),),
             Expanded(
               child: Container(
                 child: Center(child: _playBox()),
@@ -91,7 +90,7 @@ class _GameBoardState extends State<GameBoard> {
             child: Text(
           'X',
           style: TextStyle(
-              fontSize: 65.0, color: Colors.white, fontWeight: FontWeight.bold,),
+              fontSize: 65.0, fontWeight: FontWeight.bold,),
         )),
       ),
     );
@@ -124,11 +123,11 @@ class _GameBoardState extends State<GameBoard> {
         ),
         Text(
           username,
-          style: TextStyle(color: Colors.white, fontSize: 20.0),
+          style: TextStyle(fontSize: 20.0),
         ),
         Text(
           score.toString(),
-          style: TextStyle(color: Color(0XFFF8D320), fontSize: 30.0),
+          style: TextStyle(color: Theme.of(context).accentColor, fontSize: 30.0),
         ),
       ],
     );
