@@ -12,8 +12,18 @@ class MyApp extends StatelessWidget {
       theme: new ThemeData(
         primaryColor: Color(0XFF212845),
         scaffoldBackgroundColor: Color(0XFF212845),
-        brightness: Brightness.dark,
         primarySwatch: Colors.yellow,
+        buttonColor: Color(0XFFF8D320),
+        textTheme:  TextTheme(
+          body1: TextStyle(
+            color: Colors.white
+          ),
+          button: TextStyle(
+            color: Colors.green, // This is not working.
+            fontSize: 30.0,
+            fontWeight: FontWeight.bold
+          )
+        )
       ),
       home:MenuPage(),
     );
