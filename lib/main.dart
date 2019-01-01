@@ -15,6 +15,7 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: Color(0XFF212845),
         primarySwatch: Colors.yellow,
         buttonColor: Color(0XFFF8D320),
+        hintColor:  Color(0XFFCFC07A),
         textTheme:  TextTheme(
           body1: TextStyle(
             color: Colors.white
