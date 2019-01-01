@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_firebase_tic_tac_toe/auth_page.dart';
 import 'package:flutter_firebase_tic_tac_toe/game_board.dart';
 import 'package:flutter_firebase_tic_tac_toe/high_score_board.dart';
 import 'package:flutter_firebase_tic_tac_toe/users_board.dart';
@@ -51,6 +52,20 @@ class _MenuPageState extends State<MenuPage> {
                 _menuButton('HIGH SCORE', (){
                    Navigator.of(context).push(MaterialPageRoute(builder:(index)=> HighScoreBoard()));
                 }),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                  Text('Play with Others?', style: TextStyle(
+                    fontSize: 18.0
+                  ),),
+                  FlatButton(child: Text('Sign In', style:  TextStyle(
+                    fontSize: 18.0,
+                    color: Colors.blue
+                  ),), onPressed: (){
+                   Navigator.of(context).push(MaterialPageRoute(builder:(index)=> AuthPage(false)));
+                },)
+                ],)
               ],
             ),
           )
