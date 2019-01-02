@@ -1,0 +1,111 @@
+Flutter crash report; please file at https://github.com/flutter/flutter/issues.
+
+## command
+
+flutter packages get
+
+## exception
+
+YamlException: Error on line 26, column 1: Expected ':'.
+dev_dependencies:
+^
+
+```
+#0      Scanner._staleSimpleKeys (package:yaml/src/scanner.dart:491:9)
+#1      Scanner._fetchMoreTokens (package:yaml/src/scanner.dart:325:9)
+#2      Scanner.peek (package:yaml/src/scanner.dart:317:27)
+#3      Parser._parseBlockMappingKey (package:yaml/src/parser.dart:418:26)
+#4      Parser._stateMachine (package:yaml/src/parser.dart:86:16)
+#5      Parser.parse (package:yaml/src/parser.dart:47:19)
+#6      Loader._loadMapping (package:yaml/src/loader.dart:171:23)
+#7      Loader._loadNode (package:yaml/src/loader.dart:86:16)
+#8      Loader._loadMapping (package:yaml/src/loader.dart:165:19)
+#9      Loader._loadNode (package:yaml/src/loader.dart:86:16)
+#10     Loader._loadDocument (package:yaml/src/loader.dart:62:20)
+#11     Loader.load (package:yaml/src/loader.dart:54:20)
+#12     loadYamlDocument (package:yaml/yaml.dart:51:25)
+#13     loadYamlNode (package:yaml/yaml.dart:42:5)
+#14     loadYaml (package:yaml/yaml.dart:34:5)
+#15     FlutterManifest.createFromString (package:flutter_tools/src/flutter_manifest.dart:42:28)
+<asynchronous suspension>
+#16     FlutterManifest.createFromPath (package:flutter_tools/src/flutter_manifest.dart:36:12)
+<asynchronous suspension>
+#17     FlutterProject._readManifest (package:flutter_tools/src/project.dart:128:60)
+<asynchronous suspension>
+#18     FlutterProject.fromDirectory (package:flutter_tools/src/project.dart:42:44)
+<asynchronous suspension>
+#19     FlutterProject.fromPath (package:flutter_tools/src/project.dart:57:58)
+#20     PackagesGetCommand.runCommand (package:flutter_tools/src/commands/packages.dart:83:61)
+<asynchronous suspension>
+#21     FlutterCommand.verifyThenRunCommand (package:flutter_tools/src/runner/flutter_command.dart:372:18)
+#22     _asyncThenWrapperHelper.<anonymous closure> (dart:async/runtime/libasync_patch.dart:77:64)
+#23     _rootRunUnary (dart:async/zone.dart:1132:38)
+#24     _CustomZone.runUnary (dart:async/zone.dart:1029:19)
+#25     _FutureListener.handleValue (dart:async/future_impl.dart:129:18)
+#26     Future._propagateToListeners.handleValueCallback (dart:async/future_impl.dart:642:45)
+#27     Future._propagateToListeners (dart:async/future_impl.dart:671:32)
+#28     Future._complete (dart:async/future_impl.dart:476:7)
+#29     _SyncCompleter.complete (dart:async/future_impl.dart:51:12)
+#30     _AsyncAwaitCompleter.complete.<anonymous closure> (dart:async/runtime/libasync_patch.dart:33:20)
+#31     _rootRun (dart:async/zone.dart:1124:13)
+#32     _CustomZone.run (dart:async/zone.dart:1021:19)
+#33     _CustomZone.bindCallback.<anonymous closure> (dart:async/zone.dart:947:23)
+#34     _microtaskLoop (dart:async/schedule_microtask.dart:41:21)
+#35     _startMicrotaskLoop (dart:async/schedule_microtask.dart:50:5)
+#36     _runPendingImmediateCallback (dart:isolate/runtime/libisolate_patch.dart:115:13)
+#37     _RawReceivePortImpl._handleMessage (dart:isolate/runtime/libisolate_patch.dart:172:5)
+```
+
+## flutter doctor
+
+```
+[✓] Flutter (Channel beta, v0.8.2, on Microsoft Windows [Version 10.0.17134.112], locale en-US)
+    • Flutter version 0.8.2 at C:\flutter_windows_v0.8.2-beta\flutter
+    • Framework revision 5ab9e70727 (4 months ago), 2018-09-07 12:33:05 -0700
+    • Engine revision 58a1894a1c
+    • Dart version 2.1.0-dev.3.1.flutter-760a9690c2
+
+[✓] Android toolchain - develop for Android devices (Android SDK 28.0.1)
+    • Android SDK at C:\Users\nony\AppData\Local\Android\sdk
+    • Android NDK location not configured (optional; useful for native profiling support)
+    • Platform android-28, build-tools 28.0.1
+    • Java binary at: C:\Program Files\Android\Android Studio2\jre\bin\java
+    • Java version OpenJDK Runtime Environment (build 1.8.0_152-release-1024-b02)
+    • All Android licenses accepted.
+
+[!] Android Studio (version 2.1)
+    • Android Studio at C:\Program Files\Android\Android Studio
+    ✗ Flutter plugin not installed; this adds Flutter specific functionality.
+    ✗ Dart plugin not installed; this adds Dart specific functionality.
+    ✗ Unable to find bundled Java version.
+    • Try updating or re-installing Android Studio.
+
+[!] Android Studio (version 2.3)
+    • Android Studio at C:\Program Files\Android\Android Studio1
+    ✗ Flutter plugin not installed; this adds Flutter specific functionality.
+    ✗ Dart plugin not installed; this adds Dart specific functionality.
+    ✗ Unable to find bundled Java version.
+    • Try updating or re-installing Android Studio.
+
+[✓] Android Studio (version 3.1)
+    • Android Studio at C:\Program Files\Android\Android Studio2
+    • Flutter plugin version 25.0.1
+    • Dart plugin version 173.4700
+    • Java version OpenJDK Runtime Environment (build 1.8.0_152-release-1024-b02)
+
+[!] IntelliJ IDEA Community Edition (version 2017.1)
+    • IntelliJ at C:\Program Files\JetBrains\IntelliJ IDEA Community Edition 2017.1.5
+    ✗ Flutter plugin not installed; this adds Flutter specific functionality.
+    ✗ Dart plugin not installed; this adds Dart specific functionality.
+    • For information about installing plugins, see
+      https://flutter.io/intellij-setup/#installing-the-plugins
+
+[✓] VS Code, 64-bit edition (version 1.25.1)
+    • VS Code at C:\Program Files\Microsoft VS Code
+    • Flutter extension version 2.21.1
+
+[!] Connected devices
+    ! No devices available
+
+! Doctor found issues in 4 categories.
+```

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_firebase_tic_tac_toe/models/ScoreDetail.dart';
+import 'package:flutter_firebase_tic_tac_toe/models/score_detail.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/User.dart';
 
 class HighScoreBoard extends StatefulWidget {

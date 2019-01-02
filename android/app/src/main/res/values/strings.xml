@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">tic tac toe</string>
+    <string name="facebook_app_id">991236167735301</string>
+    <string name="fb_login_protocol_scheme">fb991236167735301</string>
+</resources>
