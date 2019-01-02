@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "355937839998",
+    "firebase_url": "https://tic-tac-toe-a69ee.firebaseio.com",
+    "project_id": "tic-tac-toe-a69ee",
+    "storage_bucket": "tic-tac-toe-a69ee.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:355937839998:android:d4ce6f7af464466b",
+        "android_client_info": {
+          "package_name": "com.nonybrighto.flutterfirebasetictactoe"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "355937839998-c59s7a33ttsmdh34sds6ir2omtssrbqk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCMBXPqEyy4xy4RX91vvWXfgzxotCNTH7w"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
