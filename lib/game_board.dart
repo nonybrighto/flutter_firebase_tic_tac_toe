@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_firebase_tic_tac_toe/bloc/game_bloc.dart';
+import 'package:flutter_firebase_tic_tac_toe/bloc/game_bloc_provider.dart';
+import 'package:flutter_firebase_tic_tac_toe/models/game_piece.dart';
+import 'package:flutter_firebase_tic_tac_toe/models/player.dart';
 
 class GameBoard extends StatefulWidget {
   GameBoard({Key key}) : super(key: key);
@@ -8,9 +12,12 @@ class GameBoard extends StatefulWidget {
 }
 
 class _GameBoardState extends State<GameBoard> {
+  GameBloc _gameBloc;
+
   @override
   Widget build(BuildContext context) {
-   
+    _gameBloc = GameBlocProvider.of(context).gameBloc;
+
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.fromLTRB(20.0, 40.0, 20.0, 20.0),
@@ -19,21 +26,49 @@ class _GameBoardState extends State<GameBoard> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
-                _scoreBox('dddd', 'John', 3),
+                StreamBuilder<Player>(
+                  initialData: null,
+                  stream: _gameBloc.player1,
+                  builder: (context, player1Snapshot) {
+                    final player1 = player1Snapshot.data;
+                    return _scoreBox(
+                        player1.user.name, player1.user.name, player1.score);
+                  },
+                ),
                 Text(
                   'VS',
                   style: TextStyle(fontSize: 45.0),
                 ),
-                _scoreBox('dddd', 'Mary', 5),
+                StreamBuilder<Player>(
+                  initialData: null,
+                  stream: _gameBloc.player2,
+                  builder: (context, player2Snapshot) {
+                    final player2 = player2Snapshot.data;
+                    return _scoreBox(
+                        player2.user.name, player2.user.name, player2.score);
+                  },
+                ),
               ],
             ),
-            Text("John's turn", style: TextStyle(color:Theme.of(context).accentColor, fontSize: 20.0),),
+            StreamBuilder<String>(
+              initialData: null,
+              stream: _gameBloc.gameMessage,
+              builder: (context, gameMessageSnapshot) {
+                return Text(
+                  gameMessageSnapshot.data,
+                  style: TextStyle(
+                      color: Theme.of(context).accentColor, fontSize: 20.0),
+                );
+              },
+            ),
             Expanded(
               child: Container(
                 child: Center(child: _playBox()),
               ),
             ),
-            _menuButton('PLAY AGAIN', () {})
+            _menuButton('PLAY AGAIN', () {
+              _gameBloc.repeatCurrentGame();
+            })
           ],
         ),
       ),
@@ -44,54 +79,81 @@ class _GameBoardState extends State<GameBoard> {
     Color borderColor = Color(0xFF206efe);
     double borderWidth = 4.0;
     Border lrBorder = Border(
-        left: BorderSide(color: borderColor, width: borderWidth ),
-        right: BorderSide(color: borderColor, width: borderWidth ));
+        left: BorderSide(color: borderColor, width: borderWidth),
+        right: BorderSide(color: borderColor, width: borderWidth));
     Border tbBorder = Border(
-        top: BorderSide(color: borderColor, width: borderWidth ),
-        bottom: BorderSide(color: borderColor, width: borderWidth ));
+        top: BorderSide(color: borderColor, width: borderWidth),
+        bottom: BorderSide(color: borderColor, width: borderWidth));
     Border centreBorder = Border.merge(lrBorder, tbBorder);
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: <Widget>[
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    return StreamBuilder<List<GamePiece>>(
+      initialData: [],
+      stream: _gameBloc.currentBoard,
+      builder: (context, currentBoardSnapshot) {
+        List<GamePiece> currentBoard = currentBoardSnapshot.data;
+
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            _tt(),
-            _tt(border: lrBorder),
-            _tt(),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                _tt(currentBoard[0], 0),
+                _tt(currentBoard[1], 1, border: lrBorder),
+                _tt(currentBoard[2], 2),
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                _tt(currentBoard[3], 3, border: tbBorder),
+                _tt(currentBoard[4], 4, border: centreBorder),
+                _tt(currentBoard[5], 5, border: tbBorder),
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                _tt(currentBoard[6], 6),
+                _tt(currentBoard[7], 7, border: lrBorder),
+                _tt(currentBoard[8], 8),
+              ],
+            )
           ],
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: <Widget>[
-            _tt(border: tbBorder),
-            _tt(border: centreBorder),
-            _tt(border: tbBorder),
-          ],
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: <Widget>[
-            _tt(),
-            _tt(border: lrBorder),
-            _tt(),
-          ],
-        )
-      ],
+        );
+      },
     );
   }
 
-  _tt({border}) {
+  _tt(GamePiece gamepiece, position, {border}) {
+    Color pieceColor = Colors.white;
+
+    switch (gamepiece.pieceType) {
+      case PieceType.win:
+        pieceColor = Colors.yellow;
+        break;
+      case PieceType.normal:
+      default:
+        pieceColor = Colors.white;
+        break;
+    }
     return Expanded(
-      child: Container(
-        decoration: BoxDecoration(border: border),
-        height: 120.0,
-        child: Center(
-            child: Text(
-          'X',
-          style: TextStyle(
-              fontSize: 65.0, fontWeight: FontWeight.bold,),
-        )),
+      child: GestureDetector(
+        child: Container(
+          decoration: BoxDecoration(border: border),
+          height: 120.0,
+          child: Center(
+              child: Text(
+            gamepiece.piece,
+            style: TextStyle(
+              fontSize: 65.0,
+              color: pieceColor,
+              fontWeight: FontWeight.bold,
+            ),
+          )),
+        ),
+        onTap: () {
+          _gameBloc.playPiece(position);
+        },
       ),
     );
   }
@@ -127,7 +189,8 @@ class _GameBoardState extends State<GameBoard> {
         ),
         Text(
           score.toString(),
-          style: TextStyle(color: Theme.of(context).accentColor, fontSize: 30.0),
+          style:
+              TextStyle(color: Theme.of(context).accentColor, fontSize: 30.0),
         ),
       ],
     );
