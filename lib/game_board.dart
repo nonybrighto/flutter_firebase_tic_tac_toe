@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_firebase_tic_tac_toe/bloc/game_bloc.dart';
-import 'package:flutter_firebase_tic_tac_toe/bloc/game_bloc_provider.dart';
+import 'package:flutter_firebase_tic_tac_toe/bloc/bloc_provider.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/game_piece.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/player.dart';
 
@@ -16,7 +16,7 @@ class _GameBoardState extends State<GameBoard> {
 
   @override
   Widget build(BuildContext context) {
-    _gameBloc = GameBlocProvider.of(context).gameBloc;
+    _gameBloc = BlocProvider.of(context).gameBloc;
 
     return Scaffold(
       body: Padding(

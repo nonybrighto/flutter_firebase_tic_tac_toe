@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_firebase_tic_tac_toe/bloc/bloc_provider.dart';
+import 'package:flutter_firebase_tic_tac_toe/bloc/user_bloc.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/User.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -11,28 +13,28 @@ class UsersBoard extends StatefulWidget {
 
 class _UsersBoardState extends State<UsersBoard> {
 
-  List<User> users = [
-        User(id:'aaa', name: 'Nony', avatarUrl: 'dd', currentState: UserState.available,),
-        User(id:'aab', name: 'Mary', avatarUrl: 'dd', currentState: UserState.available,),
-        User(id:'aac', name: 'Amaka', avatarUrl: 'dd', currentState: UserState.playing,),
-        User(id:'aad', name: 'Chigo', avatarUrl: 'dd', currentState: UserState.away,),
-        User(id:'aae', name: 'Ike', avatarUrl: 'dd', currentState: UserState.offline,),
-  ];
-
-
+  UserBloc _userBloc;
+  
   @override
   Widget build(BuildContext context) {
+
+    _userBloc = BlocProvider.of(context).userBloc;
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Tic Tac Toe users'),
       ),
-      body: ListView.builder(
-        itemCount: users.length,
+      body: StreamBuilder(
+        initialData: [],
+        stream: _userBloc.users,
+        builder: (context, usersSnapshot){
+          return ListView.builder(
+        itemCount: usersSnapshot.data.length,
         itemBuilder: (context, index,){
-             
-             return _userTile(users[index]);
-
-      }),
+             return _userTile(usersSnapshot.data[index]);
+      });
+        },
+      ),
     );
   }
 

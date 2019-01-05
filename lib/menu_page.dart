@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_firebase_tic_tac_toe/auth_page.dart';
+import 'package:flutter_firebase_tic_tac_toe/bloc/bloc_provider.dart';
+import 'package:flutter_firebase_tic_tac_toe/bloc/user_bloc.dart';
 import 'package:flutter_firebase_tic_tac_toe/game_board.dart';
 import 'package:flutter_firebase_tic_tac_toe/high_score_board.dart';
 import 'package:flutter_firebase_tic_tac_toe/users_board.dart';
@@ -10,8 +12,12 @@ class MenuPage extends StatefulWidget {
 }
 
 class _MenuPageState extends State<MenuPage> {
+
+  UserBloc _userBloc;
   @override
   Widget build(BuildContext context) {
+
+    _userBloc = BlocProvider.of(context).userBloc;
     return Scaffold(
       backgroundColor: Color(0XFF212845),
       body: Stack(
@@ -46,6 +52,7 @@ class _MenuPageState extends State<MenuPage> {
                 }),
                 _menuButton('PLAY WITH USER', 
                   (){
+                  _userBloc.getUsers();
                   Navigator.of(context).push(MaterialPageRoute(builder:(index)=> UsersBoard()));
                 }
                 ),
