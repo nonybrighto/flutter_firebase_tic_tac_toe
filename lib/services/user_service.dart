@@ -24,6 +24,7 @@ class UserService {
       case FacebookLoginStatus.loggedIn:
         FirebaseUser user = await _auth.signInWithFacebook(
             accessToken: result.accessToken.token);
+            await _addUserToStore(user.uid, user.email, user.displayName);
         return User(id:  user.uid, email: user.email, name: user.displayName, avatarUrl:user.photoUrl);
         break;
       case FacebookLoginStatus.cancelledByUser:
