@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_firebase_tic_tac_toe/bloc/auth_bloc.dart';
+import 'package:flutter_firebase_tic_tac_toe/bloc/bloc_provider.dart';
+import 'package:flutter_firebase_tic_tac_toe/bloc/user_bloc.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/User.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/auth.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/bloc_completer.dart';
@@ -26,6 +28,7 @@ class _AuthPageState extends State<AuthPage> implements BlocCompleter<User> {
   TextEditingController _emailController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();
   AuthBloc _authBloc;
+  UserBloc _userBloc;
 
   @override
   void initState() {
@@ -37,6 +40,7 @@ class _AuthPageState extends State<AuthPage> implements BlocCompleter<User> {
 
   @override
   Widget build(BuildContext context) {
+    _userBloc = BlocProvider.of(context).userBloc;
     return Scaffold(
       body: Builder(
         builder: (context) {
@@ -221,13 +225,12 @@ class _AuthPageState extends State<AuthPage> implements BlocCompleter<User> {
   }
 
   @override
-  completed(t) {
-    // TODO: implement completed
+  completed(user) {
+    _userBloc.changeCurrentUser(user);
   }
 
   @override
   error(error) {
-    // TODO: implement error
     Scaffold.of(_context).showSnackBar(SnackBar(
       content: Text('Error: ' + error.message),
     ));

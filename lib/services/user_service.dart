@@ -6,6 +6,7 @@ import 'package:flutter_facebook_login/flutter_facebook_login.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/User.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/app_error.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class UserService {
   FirebaseAuth _auth;
@@ -24,14 +25,20 @@ class UserService {
       case FacebookLoginStatus.loggedIn:
         FirebaseUser user = await _auth.signInWithFacebook(
             accessToken: result.accessToken.token);
-            await _addUserToStore(user.uid, user.email, user.displayName);
-        return User(id:  user.uid, email: user.email, name: user.displayName, avatarUrl:user.photoUrl);
+        User loggedInUser = User(
+            id: user.uid,
+            email: user.email,
+            name: user.displayName,
+            avatarUrl: user.photoUrl);
+        await _addUserToStore(loggedInUser);
+        await _saveUserToPreference(loggedInUser);
+        return loggedInUser;
         break;
       case FacebookLoginStatus.cancelledByUser:
-        throw(AppError('Login Cancelled')); 
+        throw (AppError('Login Cancelled'));
         break;
       case FacebookLoginStatus.error:
-        throw(AppError('Login Failed'));
+        throw (AppError('Login Failed'));
         break;
     }
 
@@ -39,47 +46,65 @@ class UserService {
   }
 
   Future<User> authenticateWithGoogle() async {
- 
-  
-try{
-  final GoogleSignInAccount googleUser = await _googleSignIn.signIn();
-  final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-  final FirebaseUser user = await _auth.signInWithGoogle(
-    accessToken: googleAuth.accessToken,
-    idToken: googleAuth.idToken,
-  );
-await _addUserToStore(user.uid, user.email, user.displayName);
-   return User(id:  user.uid, email: user.email, name: user.displayName, avatarUrl:user.photoUrl);
-}catch(error){
-  throw(AppError('Error occured during google authentication')); 
-}
+    try {
+      final GoogleSignInAccount googleUser = await _googleSignIn.signIn();
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+      final FirebaseUser user = await _auth.signInWithGoogle(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      User loggedInUser = User(
+          id: user.uid,
+          email: user.email,
+          name: user.displayName,
+          avatarUrl: user.photoUrl);
+      await _addUserToStore(loggedInUser);
+      await _saveUserToPreference(loggedInUser);
+      return loggedInUser;
+    } catch (error) {
+      throw (AppError('Error occured during google authentication'));
+    }
+  }
 
-}
+  Future<User> signUpWithEmailAndPassword(username, email, password) async {
+    //TODO: remove all uncessary stuffs
+    final FirebaseUser user = await _auth.createUserWithEmailAndPassword(
+        email: email, password: password);
 
-Future<User> signUpWithEmailAndPassword(username, email, password) async {
-  //TODO: remove all uncessary stuffs
-  final FirebaseUser user = await _auth.createUserWithEmailAndPassword(
-      email: email, password: password);
+    final FirebaseUser currentUser = await _auth.currentUser();
+    UserUpdateInfo updateInfo = new UserUpdateInfo();
+    updateInfo.displayName = username;
+    //TODO: Make image upload possible
+    updateInfo.photoUrl = '';
+    await currentUser.updateProfile(updateInfo);
+    assert(user.uid == currentUser.uid);
+    return signInWithEmailAndPasword(email, password);
+  }
 
-  final FirebaseUser currentUser = await _auth.currentUser();
-  UserUpdateInfo updateInfo = new UserUpdateInfo();
-  updateInfo.displayName = username;
-  //TODO: Make image upload possible
-  updateInfo.photoUrl = '';
-  await currentUser.updateProfile(updateInfo);
-  assert(user.uid == currentUser.uid);
-  await _addUserToStore(currentUser.uid, currentUser.email, username);
-  return signInWithEmailAndPasword(email, password);
-}
+  Future<User> signInWithEmailAndPasword(email, password) async {
+    final FirebaseUser user = await _auth.signInWithEmailAndPassword(
+        email: email, password: password);
+    User loggedInUser = User(
+        id: user.uid,
+        email: user.email,
+        name: user.displayName,
+        avatarUrl: user.photoUrl);
+    await _addUserToStore(loggedInUser);
+    await _saveUserToPreference(loggedInUser);
+    return loggedInUser;
+  }
 
-Future<User> signInWithEmailAndPasword(email, password) async {
-  final FirebaseUser user =
-      await _auth.signInWithEmailAndPassword(email: email, password: password);
-  return User(id:  user.uid, email: user.email, name: user.displayName, avatarUrl:user.photoUrl);
-}
+  Future<Null> _addUserToStore(User user) async {
+    await Firestore.instance
+        .collection('users')
+        .document(user.id)
+        .setData({'email': user.email, 'displayName': user.name});
+  }
 
-
-Future<Null> _addUserToStore(id, email, displayName) async{
-  await Firestore.instance.collection('users').document(id).setData({'email': email, 'displayName': displayName});
-}
+  Future<Null> _saveUserToPreference(User loggedInUser) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('user_id', loggedInUser.id);
+    await prefs.setString('user_name', loggedInUser.name);
+  }
 }

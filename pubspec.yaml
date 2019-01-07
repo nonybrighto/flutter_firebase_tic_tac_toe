@@ -25,6 +25,8 @@ dependencies:
   flutter_facebook_login: ^1.1.1
   rxdart: ^0.18.1
   cloud_firestore: ^0.8.1+1
+  firebase_messaging: ^2.1.0
+  shared_preferences: ^0.4.3
 
 dev_dependencies:
   flutter_test:

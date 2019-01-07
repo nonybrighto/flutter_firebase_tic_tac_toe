@@ -19,6 +19,8 @@ class UserBloc{
 
   Function() get getUsers => () => _getUsersSubject.sink.add(null);
 
+  Function(User) get changeCurrentUser => (user) => _currentUserSubject.sink.add(user);
+
   UserBloc(){
 
 
