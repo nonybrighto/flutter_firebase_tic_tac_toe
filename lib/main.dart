@@ -3,6 +3,7 @@ import 'package:flutter_firebase_tic_tac_toe/bloc/game_bloc.dart';
 import 'package:flutter_firebase_tic_tac_toe/bloc/bloc_provider.dart';
 import 'package:flutter_firebase_tic_tac_toe/bloc/user_bloc.dart';
 import 'package:flutter_firebase_tic_tac_toe/menu_page.dart';
+import 'package:flutter_firebase_tic_tac_toe/services/user_service.dart';
 
 void main() => runApp(new MyApp());
 
@@ -13,7 +14,7 @@ class MyApp extends StatelessWidget {
 
     return BlocProvider(
         gameBloc: GameBloc(),
-        userBloc: UserBloc(),
+        userBloc: UserBloc(UserService()),
         child: MaterialApp(
       title: 'Flutter Demo',
       theme: new ThemeData(

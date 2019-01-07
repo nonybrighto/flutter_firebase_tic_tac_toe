@@ -7,3 +7,8 @@
 build/
 
 .flutter-plugins
+
+.nyc_output
+coverage/
+lib/form_page.dart
+functions/functions/node_modules

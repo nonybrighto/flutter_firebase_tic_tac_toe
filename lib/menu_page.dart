@@ -5,6 +5,7 @@ import 'package:flutter_firebase_tic_tac_toe/bloc/user_bloc.dart';
 import 'package:flutter_firebase_tic_tac_toe/game_board.dart';
 import 'package:flutter_firebase_tic_tac_toe/high_score_board.dart';
 import 'package:flutter_firebase_tic_tac_toe/users_board.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class MenuPage extends StatefulWidget {
   @override
@@ -13,7 +14,35 @@ class MenuPage extends StatefulWidget {
 
 class _MenuPageState extends State<MenuPage> {
 
+
   UserBloc _userBloc;
+  FirebaseMessaging _messaging = new FirebaseMessaging();
+
+  @override
+    void initState() {
+      // TODO: implement initState
+      super.initState();
+
+    _messaging.configure(onLaunch: (Map<String, dynamic> message) {
+      print(message);
+    }, onMessage: (Map<String, dynamic> message) {
+
+      print(message);
+    }, onResume: (Map<String, dynamic> message) {
+      //  print(message);
+    });
+
+    _messaging.getToken().then((token) {
+      print('------------------');
+      print(token);
+      _userBloc.changeFcmToken(token);
+    });
+
+
+
+  }
+
+
   @override
   Widget build(BuildContext context) {
 

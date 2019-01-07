@@ -30,6 +30,8 @@ class UserService {
             email: user.email,
             name: user.displayName,
             avatarUrl: user.photoUrl);
+        String fcmToken = await _getTokenFromStore();
+        loggedInUser.copyWith(fcmToken: fcmToken);
         await _addUserToStore(loggedInUser);
         await _saveUserToPreference(loggedInUser);
         return loggedInUser;
@@ -59,6 +61,8 @@ class UserService {
           email: user.email,
           name: user.displayName,
           avatarUrl: user.photoUrl);
+        String fcmToken = await _getTokenFromStore();
+        loggedInUser.copyWith(fcmToken: fcmToken);
       await _addUserToStore(loggedInUser);
       await _saveUserToPreference(loggedInUser);
       return loggedInUser;
@@ -90,21 +94,45 @@ class UserService {
         email: user.email,
         name: user.displayName,
         avatarUrl: user.photoUrl);
+
+        String fcmToken = await _getTokenFromStore();
+        loggedInUser = loggedInUser.copyWith(fcmToken: fcmToken);
     await _addUserToStore(loggedInUser);
     await _saveUserToPreference(loggedInUser);
     return loggedInUser;
   }
 
   Future<Null> _addUserToStore(User user) async {
+
     await Firestore.instance
         .collection('users')
         .document(user.id)
-        .setData({'email': user.email, 'displayName': user.name});
+        .setData({'email': user.email, 'displayName': user.name, 'fcmToken': user.fcmToken});
   }
 
   Future<Null> _saveUserToPreference(User loggedInUser) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString('user_id', loggedInUser.id);
     await prefs.setString('user_name', loggedInUser.name);
+    return null;
+  }
+
+  saveUserFcmTokenToPreference(String token) async{
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('fcm_token', token);
+  }
+
+  addUserTokenToStore(String userId, String fcmToken) async{
+      await Firestore.instance
+        .collection('users')
+        .document(userId)
+        .setData({'fcmToken': fcmToken});
+  }
+
+
+  Future<String> _getTokenFromStore() async{ 
+       SharedPreferences prefs = await SharedPreferences.getInstance();
+       String fcmToken = prefs.getString('fcm_token');
+       return fcmToken;
   }
 }
