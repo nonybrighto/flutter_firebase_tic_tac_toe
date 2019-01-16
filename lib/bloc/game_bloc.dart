@@ -1,11 +1,17 @@
 import 'dart:async';
 
 import 'package:flutter_firebase_tic_tac_toe/models/User.dart';
+import 'package:flutter_firebase_tic_tac_toe/models/game.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/game_piece.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/player.dart';
+import 'package:flutter_firebase_tic_tac_toe/services/game_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:rxdart/rxdart.dart';
 
 class GameBloc {
+
+  GameService gameService;
+
   List<GamePiece> _currentBoardC = [];
   bool _gameOver = false;
   final _currentBoardSubject = BehaviorSubject<List<GamePiece>>(
@@ -17,21 +23,47 @@ class GameBloc {
   final _gameMessageSubject =
       BehaviorSubject<String>(seedValue: 'Tic - Tac - Toe');
   final _repeatCurrentGameSubject = BehaviorSubject<Null>(seedValue: null);
+  final _handleChallengeSubject = BehaviorSubject<Map>();
 
   final _playPiece = BehaviorSubject<int>(seedValue: null);
+  final _gameType = BehaviorSubject<GameType>();
+  final _multiNetworkMessage = BehaviorSubject<String>(seedValue: 'Tic Tac Toe ...');
+  final _multiNetworkStarted = BehaviorSubject<bool>(seedValue: false);
 
   //sink
   Function(int) get playPiece => (position) => _playPiece.sink.add(position);
   Function() get repeatCurrentGame =>
       () => _repeatCurrentGameSubject.sink.add(null);
+  Function(String, String, String, String, String, String, ChallengeHandleType) get handleChallenge => (senderId, senderName, senderFcmToken,  receiverId, receiverName, receiverFcmToken, challengeHandleType) => _handleChallengeSubject.sink.add({'senderId': senderId, 'senderName': senderName, 'senderFcmToken': senderFcmToken, 'receiverId':receiverId,  'receiverName':receiverName, 'receiverFcmToken': receiverFcmToken, 'challengeHandleType': challengeHandleType});
+
+  Function(GameType) get gameType => (gameType) => _gameType.sink.add(gameType);
+
   //stream
   Stream<List<GamePiece>> get currentBoard => _currentBoardSubject.stream;
   Stream<Player> get player1 => _player1Subject.stream;
   Stream<Player> get player2 => _player2Subject.stream;
   Stream<Player> get currentPlayer => _currentPlayerSubject.stream;
   Stream<String> get gameMessage => _gameMessageSubject.stream;
+  Stream<String> get multiNetworkMessage => _multiNetworkMessage.stream;
+  Stream<bool> get multiNetworkStarted => _multiNetworkStarted.stream;
 
-  GameBloc() {
+  GameBloc({this.gameService}) {
+
+    _handleChallengeSubject.stream.listen((challengeDetails){
+
+        String senderId = challengeDetails['senderId'];
+        String senderName = challengeDetails['senderName'];
+        String senderFcmToken = challengeDetails['senderFcmToken'];
+         String receiverId = challengeDetails['receiverId'];
+        String receiverName = challengeDetails['receiverName'];
+        String receiverFcmToken = challengeDetails['receiverFcmToken'];
+        ChallengeHandleType handleType = challengeDetails['challengeHandleType'];
+
+
+        gameService.handleChallenge(senderId, senderName, senderFcmToken, receiverId, receiverName, receiverFcmToken, handleType);
+
+    });
+
     _currentBoardC = List.generate(
         9, (index) => GamePiece(piece: '', pieceType: PieceType.normal));
 
@@ -50,7 +82,7 @@ class GameBloc {
         score: 0));
 
     final players =
-        Observable.combineLatest2(_player1Subject, player2, (player1, player2) {
+        Observable.combineLatest2(_player1Subject, _player2Subject, (player1, player2) {
       return {'player1': player1, 'player2': player2};
     });
 
@@ -69,12 +101,6 @@ class GameBloc {
         _currentBoardC[position] = currentPlayer.gamePiece;
         final List<int> winLine = _getWinLine(_currentBoardC, currentPlayer);
         if (winLine.isNotEmpty) {
-          // _currentBoardC[0].pieceType = PieceType.win;
-          // _currentBoardC[1].pieceType = PieceType.win;
-          // _currentBoardC[2].pieceType = PieceType.win;
-          // _currentBoardC[winLine[0]].pieceType = PieceType.win;
-          // _currentBoardC[winLine[1]].pieceType = PieceType.win;
-          // _currentBoardC[winLine[2]].pieceType = PieceType.win;
 
          _currentBoardC[winLine[0]] = _currentBoardC[winLine[0]].copyWith(pieceType: PieceType.win);
         _currentBoardC[winLine[1]] = _currentBoardC[winLine[1]].copyWith(pieceType: PieceType.win);
@@ -148,6 +174,63 @@ class GameBloc {
     return [];
   }
 
+
+  startServerGame(String player1Id, player2Id){
+
+
+              String gameId = player1Id+'_'+player2Id;
+
+              Firestore.instance.collection('games').document(gameId).snapshots().listen((snapshot){
+
+                      print(snapshot);
+                       print('snapshot');
+
+                      Map<String, dynamic> gameData = snapshot.data;
+
+                      _drawNetworkPlayer(gameData['player1'], _player1Subject);
+                      _drawNetworkPlayer(gameData['player2'], _player2Subject);
+                      _drawNetworkBoard(gameData['pieces']);
+                      _drawCurrentPlayer(gameData['currentPlayer']);
+
+
+              });
+
+            //get the game from the server and listen for it here
+            _gameType.sink.add(GameType.multi_network);
+
+            _multiNetworkMessage.sink.add('Game has been Started! Click button to play');
+            _multiNetworkStarted.sink.add(true);
+
+  }
+
+  _drawNetworkPlayer(Map player, playerSubject){
+
+    Player gottenPlayer = Player(gamePiece: GamePiece(piece: player['gamePiece'], pieceType: PieceType.normal), score: player['score'], user: User(id: player['user']['id'], name: player['user']['name']));
+
+    playerSubject.sink.add(gottenPlayer);
+  }
+
+  _drawCurrentPlayer(String playerId){
+
+        Observable.combineLatest2(_player1Subject, _player2Subject, (Player player1,  Player player2){
+
+            return [player1, player2];
+        }).listen((List<Player> players){
+
+             Player playerWithId = players.firstWhere((player) => player.user.id == playerId);
+             _currentPlayerSubject.sink.add(playerWithId);
+        });
+
+  }
+
+  _drawNetworkBoard(Map networkPieces){
+
+       List<GamePiece>  pieces =  networkPieces.values.toList().map((piece) => GamePiece(piece:  piece, pieceType: PieceType.normal)).toList();
+       _currentBoardC = pieces;
+       _currentBoardSubject.sink.add(_currentBoardC);
+  
+  }
+
   close() {
     _gameMessageSubject.close();
     _currentBoardSubject.close();
@@ -155,5 +238,9 @@ class GameBloc {
     _player1Subject.close();
     _player2Subject.close();
     _repeatCurrentGameSubject.close();
+    _handleChallengeSubject.close();
+    _gameType.close();
+    _multiNetworkMessage.close();
+    _multiNetworkStarted.close();
   }
 }

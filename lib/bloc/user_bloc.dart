@@ -7,7 +7,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class UserBloc{
 
-  final UserService _userService;
+  final UserService userService;
 
   final _currentUserSubject = BehaviorSubject<User>(seedValue: User(id: null));
   final _usersSubject = BehaviorSubject<List<User>>(seedValue: []);
@@ -25,7 +25,7 @@ class UserBloc{
   Function(User) get changeCurrentUser => (user) => _currentUserSubject.sink.add(user);
   Function(String) get changeFcmToken => (token) => _changeFcmTokenSubject.sink.add(token);
 
-  UserBloc(this._userService){
+  UserBloc({this.userService}){
 
 
    _getUsersSubject.stream.listen((_){
@@ -37,6 +37,7 @@ class UserBloc{
                  name: userSnapshot['displayName'],
                  email: null,
                  avatarUrl: null,
+                 fcmToken: userSnapshot['fcmToken'],
                  currentState: UserState.available
                )).toList(); 
 
@@ -56,10 +57,10 @@ class UserBloc{
           if(currentUser.id != null){
             currentUser = currentUser.copyWith(fcmToken: token);
             _currentUserSubject.sink.add(currentUser);
-            _userService.addUserTokenToStore(currentUser.id, token);
+            userService.addUserTokenToStore(currentUser.id, token);
           }
 
-          _userService.saveUserFcmTokenToPreference(token);
+          userService.saveUserFcmTokenToPreference(token);
 
 
    });  

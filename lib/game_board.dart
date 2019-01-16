@@ -31,8 +31,8 @@ class _GameBoardState extends State<GameBoard> {
                   stream: _gameBloc.player1,
                   builder: (context, player1Snapshot) {
                     final player1 = player1Snapshot.data;
-                    return _scoreBox(
-                        player1.user.name, player1.user.name, player1.score);
+                    return (player1 != null) ?_scoreBox(
+                        player1.user.name, player1.user.name, player1.score) : Container();
                   },
                 ),
                 Text(
@@ -44,14 +44,14 @@ class _GameBoardState extends State<GameBoard> {
                   stream: _gameBloc.player2,
                   builder: (context, player2Snapshot) {
                     final player2 = player2Snapshot.data;
-                    return _scoreBox(
-                        player2.user.name, player2.user.name, player2.score);
+                    return (player2 != null) ? _scoreBox(
+                        player2.user.name, player2.user.name, player2.score): Container();
                   },
                 ),
               ],
             ),
             StreamBuilder<String>(
-              initialData: null,
+              initialData: 'Tic Tac Toe',
               stream: _gameBloc.gameMessage,
               builder: (context, gameMessageSnapshot) {
                 return Text(
@@ -86,11 +86,11 @@ class _GameBoardState extends State<GameBoard> {
         bottom: BorderSide(color: borderColor, width: borderWidth));
     Border centreBorder = Border.merge(lrBorder, tbBorder);
     return StreamBuilder<List<GamePiece>>(
-      initialData: [],
+      initialData: List.generate(9, (index) => GamePiece(piece:'', pieceType:PieceType.normal)),
       stream: _gameBloc.currentBoard,
       builder: (context, currentBoardSnapshot) {
         List<GamePiece> currentBoard = currentBoardSnapshot.data;
-
+        
         return Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[

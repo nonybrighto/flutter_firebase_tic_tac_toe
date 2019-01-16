@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_firebase_tic_tac_toe/bloc/bloc_provider.dart';
+import 'package:flutter_firebase_tic_tac_toe/bloc/game_bloc.dart';
 import 'package:flutter_firebase_tic_tac_toe/bloc/user_bloc.dart';
+import 'package:flutter_firebase_tic_tac_toe/game_process_page.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/User.dart';
+import 'package:flutter_firebase_tic_tac_toe/models/game.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class UsersBoard extends StatefulWidget {
   UsersBoard({Key key}) : super(key: key);
@@ -14,11 +18,13 @@ class UsersBoard extends StatefulWidget {
 class _UsersBoardState extends State<UsersBoard> {
 
   UserBloc _userBloc;
+  GameBloc _gameBloc;
   
   @override
   Widget build(BuildContext context) {
 
     _userBloc = BlocProvider.of(context).userBloc;
+    _gameBloc = BlocProvider.of(context).gameBloc;
 
     return Scaffold(
       appBar: AppBar(
@@ -49,6 +55,36 @@ class _UsersBoardState extends State<UsersBoard> {
       title: Text(user.name, style: TextStyle(color:  Colors.white, fontSize: 23.0),),
       trailing: _userStateDisplay(user.currentState),  
       ),
+      onTap: (){
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+                title: Text('Send Challenge'),
+                content: Text('Do you want to challenge '+user.name),
+                actions: <Widget>[
+                  FlatButton(
+                    child: Text('CHALLENGE'),
+                    onPressed: () async{
+                        //TODONOW: put main ids here
+                         SharedPreferences prefs = await SharedPreferences.getInstance();
+                         String senderFcmToken = prefs.getString('fcm_token');
+                         String senderId = prefs.getString('user_id');
+                         String senderName = prefs.getString('user_name');
+                         _gameBloc.handleChallenge(senderId, senderName, senderFcmToken, user.id, user.name, user.fcmToken, ChallengeHandleType.challenge);
+                         Navigator.pop(context);
+                         Navigator.of(context).push(MaterialPageRoute(builder: (context) => GameProcessPage()));
+                    },
+                  ),
+                  FlatButton(
+                    child: Text('DECLINE'),
+                    onPressed: (){
+                      Navigator.pop(context);
+                    },
+                  )
+                ],
+          ),
+        );
+      },
     );
   }
 

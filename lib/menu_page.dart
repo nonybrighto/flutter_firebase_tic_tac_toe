@@ -1,11 +1,17 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_firebase_tic_tac_toe/auth_page.dart';
 import 'package:flutter_firebase_tic_tac_toe/bloc/bloc_provider.dart';
+import 'package:flutter_firebase_tic_tac_toe/bloc/game_bloc.dart';
 import 'package:flutter_firebase_tic_tac_toe/bloc/user_bloc.dart';
 import 'package:flutter_firebase_tic_tac_toe/game_board.dart';
+import 'package:flutter_firebase_tic_tac_toe/game_process_page.dart';
 import 'package:flutter_firebase_tic_tac_toe/high_score_board.dart';
+import 'package:flutter_firebase_tic_tac_toe/models/game.dart';
 import 'package:flutter_firebase_tic_tac_toe/users_board.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MenuPage extends StatefulWidget {
   @override
@@ -16,20 +22,43 @@ class _MenuPageState extends State<MenuPage> {
 
 
   UserBloc _userBloc;
+  GameBloc  _gameBloc;
   FirebaseMessaging _messaging = new FirebaseMessaging();
+
+  String username = '';
 
   @override
     void initState() {
       // TODO: implement initState
       super.initState();
+      _delGetUserNamePref(); //TODO: to delete later
 
     _messaging.configure(onLaunch: (Map<String, dynamic> message) {
       print(message);
     }, onMessage: (Map<String, dynamic> message) {
 
-      print(message);
+      String notificationType = message['data']['notificationType'];
+
+      switch(notificationType){
+            case 'challenge':
+                
+                _showAcceptanceDialog(message);
+                break;
+              
+            case 'started':
+                  //TODO:gameBlocMessage that shows on the process page and allows button to display
+                  _gameBloc.startServerGame(message['data']['player1Id'], message['data']['player2Id']);
+                  break;
+            case 'reject':
+                  //GameBloc message too showing that game was declined ... and gives user option to go to menu.
+                  break;
+            default:
+                print('message');
+                break;           
+      }
+     
     }, onResume: (Map<String, dynamic> message) {
-      //  print(message);
+     // _showAcceptanceDialog(message);
     });
 
     _messaging.getToken().then((token) {
@@ -42,11 +71,73 @@ class _MenuPageState extends State<MenuPage> {
 
   }
 
+  _delGetUserNamePref() async{
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String senderName = prefs.getString('user_name');
+
+      setState(() {
+              username = senderName ?? 'No name';
+            });
+
+  }
+
+
+  _showAcceptanceDialog(Map<String, dynamic> message) async{
+
+    String challengerId = message['data']['senderId'];
+    String challengerName = message['data']['senderName'];
+    String challengerFcmToken = message['data']['senderFcmToken'];
+
+
+     SharedPreferences prefs = await SharedPreferences.getInstance();
+     String senderFcmToken = prefs.getString('fcm_token');
+    String senderId = prefs.getString('user_id');
+    String senderName = prefs.getString('user_name');
+
+    //TODO: remove This if not necessary .. The future dealyed
+    Future.delayed(
+      Duration.zero, (){
+
+        showDialog(
+          barrierDismissible: false,
+          context: context,
+          builder: (context) => AlertDialog(
+
+            title: Text('Tic Tac Toe Challeenge'),
+            content: Text(challengerName+' has Challenged you to a game of tic tac toe'),
+
+            actions: <Widget>[
+              FlatButton(
+                child: Text('ACCEPT'),
+                onPressed: () async{
+                      _gameBloc.handleChallenge(senderId, senderName, senderFcmToken, challengerId, challengerName, challengerFcmToken, ChallengeHandleType.accept);
+                      Navigator.pop(context);
+                      Navigator.of(context).push(MaterialPageRoute(builder: (context) => GameProcessPage()));
+                },
+              ),
+              FlatButton(
+                child: Text('DECLINE'),
+                onPressed: (){
+                       _gameBloc.handleChallenge(senderId, senderName, senderFcmToken, challengerId, challengerName, challengerFcmToken, ChallengeHandleType.reject);
+                      Navigator.pop(context);
+                },
+              )
+            ],
+
+          ),
+        );
+      }
+    );
+
+  }
+
 
   @override
   Widget build(BuildContext context) {
 
     _userBloc = BlocProvider.of(context).userBloc;
+    _gameBloc = BlocProvider.of(context).gameBloc;
     return Scaffold(
       backgroundColor: Color(0XFF212845),
       body: Stack(
@@ -76,6 +167,11 @@ class _MenuPageState extends State<MenuPage> {
                 SizedBox(
                   height: 80.0,
                 ),
+                Text('currentUser - '+username),
+                SizedBox(
+                  height: 80.0,
+                ),
+
                 _menuButton('PLAY WITH COMPUTER', (){
                   Navigator.of(context).push(MaterialPageRoute(builder:(index)=> GameBoard()));
                 }),
@@ -86,6 +182,7 @@ class _MenuPageState extends State<MenuPage> {
                 }
                 ),
                 _menuButton('HIGH SCORE', (){
+                  
                    Navigator.of(context).push(MaterialPageRoute(builder:(index)=> HighScoreBoard()));
                 }),
 
