@@ -3,15 +3,7 @@ var admin = require('firebase-admin');
 var app = admin.initializeApp();
 
 
-// // Create and Deploy Your First Cloud Functions
-// // https://firebase.google.com/docs/functions/write-firebase-functions
-//
-
-exports.helloWorld = functions.https.onRequest((request, response) => {
-    let name = request.query.name;
-    response.send("Hello from Firebase!" + name);
-});
-
+//NB: No major security feature implemented such as CSRF protection
 
 exports.handleChallenge = functions.https.onRequest((request, response) => {
     
@@ -138,4 +130,49 @@ exports.handleChallenge = functions.https.onRequest((request, response) => {
             });
     }
 
+});
+
+
+
+exports.playPiece = functions.https.onRequest((request, response) => {
+
+        let gameId = request.query.gameId;
+        let playerId = request.query.playerId;
+        let position = request.query.position;
+        let piece = '';
+
+        let pieceUpdateKey = 'pieces.'+position;
+
+        admin.firestore().collection('games').doc(gameId).get().then((game) => {
+
+            let gameData = game.data();
+           if(game.exists && gameData.currentPlayer === playerId){
+
+                console.log('The collection response', game.data());
+               
+                //change the currentPLayer
+                let currentPlayer = '';
+                if(gameData.currentPlayer === gameData.player1.user.id){
+                    currentPlayer = gameData.player2.user.id;
+                    piece = gameData.player1.gamePiece;
+                }else{
+                    currentPlayer = gameData.player1.user.id;
+                    piece = gameData.player2.gamePiece;
+                }
+
+                console.log(currentPlayer , piece);
+                return admin.firestore().collection('games').doc(gameId).update({
+                    currentPlayer: currentPlayer,
+                    [pieceUpdateKey]: piece
+                });
+           }else{
+               return response.send('Not your turn');
+           }
+        }).then((result) => {
+                console.log('Successfully played piece!');
+                return response.send(true);
+        }).catch((err) => {
+            console.log('Error playing piece:', err);
+            response.send(false);
+        });
 });

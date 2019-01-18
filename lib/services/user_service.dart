@@ -135,4 +135,15 @@ class UserService {
        String fcmToken = prefs.getString('fcm_token');
        return fcmToken;
   }
+
+  Future<User> getCurrentUser() async {
+
+         SharedPreferences prefs = await SharedPreferences.getInstance();
+         String   token = prefs.getString('fcm_token');
+          String id = prefs.getString('user_id');
+          String name = prefs.getString('user_name');
+
+          return User(id: id, name: name, fcmToken:  token );
+
+  }
 }

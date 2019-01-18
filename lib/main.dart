@@ -13,9 +13,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
+    UserService userService = UserService();
+
     return BlocProvider(
-        gameBloc: GameBloc(gameService: GameService()),
-        userBloc: UserBloc(userService: UserService()),
+        gameBloc: GameBloc(gameService: GameService(), userService: userService),
+        userBloc: UserBloc(userService: userService),
         child: MaterialApp(
       title: 'Flutter Demo',
       theme: new ThemeData(
