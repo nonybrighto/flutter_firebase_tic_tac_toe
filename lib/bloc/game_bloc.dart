@@ -143,12 +143,8 @@ class GameBloc {
           _currentBoardC[position] = currentPlayer.gamePiece;
           final List<int> winLine = _getWinLine(_currentBoardC, currentPlayer);
           if (winLine.isNotEmpty) {
-            _currentBoardC[winLine[0]] =
-                _currentBoardC[winLine[0]].copyWith(pieceType: PieceType.win);
-            _currentBoardC[winLine[1]] =
-                _currentBoardC[winLine[1]].copyWith(pieceType: PieceType.win);
-            _currentBoardC[winLine[2]] =
-                _currentBoardC[winLine[2]].copyWith(pieceType: PieceType.win);
+           
+           _markWinLineOnBoard(winLine);
 
             _gameMessageSubject.sink.add(currentPlayer.user.name + ' wins!!!');
 
@@ -189,6 +185,15 @@ class GameBloc {
       _gameMessageSubject.sink.add(currentPlayer.user.name + "'s turn");
       _gameOver = false;
     });
+  }
+
+  _markWinLineOnBoard(List<int> winLine){
+     _currentBoardC[winLine[0]] =
+                _currentBoardC[winLine[0]].copyWith(pieceType: PieceType.win);
+            _currentBoardC[winLine[1]] =
+                _currentBoardC[winLine[1]].copyWith(pieceType: PieceType.win);
+            _currentBoardC[winLine[2]] =
+                _currentBoardC[winLine[2]].copyWith(pieceType: PieceType.win);
   }
 
   bool _isTie(List<GamePiece> gameBoard) {
@@ -264,7 +269,7 @@ class GameBloc {
         .collection('games')
         .document(gameId)
         .snapshots()
-        .listen((snapshot) {
+        .listen((snapshot) async{
             print(snapshot);
             print('snapshot');
 
@@ -273,8 +278,26 @@ class GameBloc {
             _drawNetworkPlayer(gameData['player1'], _player1Subject);
             _drawNetworkPlayer(gameData['player2'], _player2Subject);
             _drawNetworkBoard(gameData['pieces']);
-            //_drawCurrentPlayer(gameData['currentPlayer']);
+           
+           if(gameData['winner'].isNotEmpty && gameData['winner'] != 'tie'){
+            
+              Player gameWinner = await _getPlayerFromId(gameData['winner']);
+              _gameMessageSubject.sink.add(gameWinner.user.name + ' wins!!!');
+              List<int> winLine = _getWinLine(_currentBoardC, gameWinner);
+              _markWinLineOnBoard(winLine);
+              _currentBoardSubject.sink.add(_currentBoardC);
+              _gameOver = true;
+
+           }else if(gameData['winner'] == 'tie'){
+                  print('its a tie');
+                  //TODO: handle tie option including making it the time play again button shows up
+                  _gameMessageSubject.sink.add("It's a tie !!!");
+                  _gameOver = true;
+           }else{
             _changePlayerTurn(false, idToUse: gameData['currentPlayer']);
+           }
+    }).onError((error){
+        print(error);
     });
 
     //get the game from the server and listen for it here
@@ -295,16 +318,15 @@ class GameBloc {
     playerSubject.sink.add(gottenPlayer);
   }
 
-  // _drawCurrentPlayer(String playerId) {
-  //   Observable.combineLatest2(_player1Subject, _player2Subject,
-  //       (Player player1, Player player2) {
-  //     return [player1, player2];
-  //   }).listen((List<Player> players) {
-  //     Player playerWithId =
-  //         players.firstWhere((player) => player.user.id == playerId);
-  //     _currentPlayerSubject.sink.add(playerWithId);
-  //   });
-  // }
+  Future<Player> _getPlayerFromId(String playerId) async{
+
+    List<Player> players = await Observable.combineLatest2(_player1Subject, _player2Subject, (Player p1, Player p2){
+
+      return<Player>[p1, p2];
+    }).first;
+
+    return players.firstWhere((player) => player.user.id == playerId);
+  }
 
   _drawNetworkBoard(Map networkPieces) {
     List<GamePiece> pieces = networkPieces.values

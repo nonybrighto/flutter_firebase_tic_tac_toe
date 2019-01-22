@@ -68,6 +68,7 @@ exports.handleChallenge = functions.https.onRequest((request, response) => {
                 gamePiece: 'O',
                 score: 0
               },
+              winner: '',
               currentPlayer: receiverId,
               pieces: {
                   0: '',
@@ -142,6 +143,8 @@ exports.playPiece = functions.https.onRequest((request, response) => {
         let piece = '';
 
         let pieceUpdateKey = 'pieces.'+position;
+        let scoreUpdateKey = '';
+        let playersCurrentScore = 0;
 
         admin.firestore().collection('games').doc(gameId).get().then((game) => {
 
@@ -151,21 +154,47 @@ exports.playPiece = functions.https.onRequest((request, response) => {
                 console.log('The collection response', game.data());
                
                 //change the currentPLayer
-                let currentPlayer = '';
+                let nextPlayer = '';
+                //TODO: refactor this and use gameData['player1'].gamePiece
                 if(gameData.currentPlayer === gameData.player1.user.id){
-                    currentPlayer = gameData.player2.user.id;
+                    nextPlayer = gameData.player2.user.id;
                     piece = gameData.player1.gamePiece;
+                    scoreUpdateKey = 'player1.score';
+                    playersCurrentScore = gameData.player1.score;
                 }else{
-                    currentPlayer = gameData.player1.user.id;
+                    nextPlayer = gameData.player1.user.id;
                     piece = gameData.player2.gamePiece;
+                    scoreUpdateKey = 'player2.score';
+                    playersCurrentScore = gameData.player2.score;
                 }
 
-                console.log(currentPlayer , piece);
-                return admin.firestore().collection('games').doc(gameId).update({
-                    currentPlayer: currentPlayer,
+                let gamePiecesToTest = gameData.pieces;
+                gamePiecesToTest[position] = piece;
+
+                let winner = '';
+
+                if(_isTie(gamePiecesToTest)){
+                        winner = 'tie';
+                    }else if(_hasWin(gamePiecesToTest, piece)){
+                        winner = playerId;
+                }
+                let gameUpdate = {
+                    currentPlayer: nextPlayer,
                     [pieceUpdateKey]: piece
-                });
-           }else{
+                    
+                };
+                //taken out of gameUpdate. Needs es2018
+                //...(winner !== '' && {winner: playerId}),
+                //...(winner !== '' && winner !== 'tie' && {[scoreUpdateKey]: playersCurrentScore}),
+                if(winner !== ''){
+                    gameUpdate.winner = winner;
+                }
+                if(winner !== '' && winner !== 'tie'){
+                    gameUpdate[scoreUpdateKey] = playersCurrentScore + 1;
+                }
+                return admin.firestore().collection('games').doc(gameId).update(gameUpdate);
+          
+            }else{
                return response.send('Not your turn');
            }
         }).then((result) => {
@@ -176,3 +205,56 @@ exports.playPiece = functions.https.onRequest((request, response) => {
             response.send(false);
         });
 });
+
+function _isTie(pieces){
+
+//     Object.keys(pieces).every(key => {
+
+//        // return pieces[key] !== '';
+
+//         if(pieces[key] === ''){
+//             console.log('tie false');
+//             return false;
+//         }
+       
+//     });
+//    // console.log('tie true');
+//    // return true;
+
+    for(let key of Object.keys(pieces)){
+        if(pieces[key] === ''){
+            console.log('tie false');
+            return false;
+        }
+    }
+    console.log('tie true');
+    return true;
+    
+}
+
+function _hasWin(pieces, playerPiece){
+    
+    let possibleWins = [
+        [0, 1, 2],
+        [3, 4, 5],
+        [6, 7, 8],
+        [0, 3, 6],
+        [1, 4, 7],
+        [2, 5, 8],
+        [0, 4, 8],
+        [2, 4, 6]
+    ];
+    
+    for (let i = 0; i < possibleWins.length; i++) {
+        let currentPossibleWin = possibleWins[i];
+        // String playerPiece = player.gamePiece.piece;
+        if (pieces[currentPossibleWin[0]] === playerPiece &&
+            pieces[currentPossibleWin[1]] === playerPiece &&
+            pieces[currentPossibleWin[2]] === playerPiece) {
+                console.log('win true');
+                return true;
+            }
+        }
+        console.log('win false');
+        return false;
+}
