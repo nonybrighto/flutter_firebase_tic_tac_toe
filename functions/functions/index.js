@@ -217,6 +217,50 @@ exports.playPiece = functions.https.onRequest((request, response) => {
         });
 });
 
+exports.replayGame = functions.https.onRequest((request, response) => {
+
+    let gameId = request.query.gameId;
+    let playerId = request.query.playerId;
+   
+
+    admin.firestore().collection('games').doc(gameId).get().then((game) => {
+
+        let gameData = game.data();
+        if(game.exists &&
+            gameData.winner !== ''
+            && (gameData.player1.user.id !== playerId || gameData.player2.user.id !== playerId)){
+        
+            return admin.firestore().collection('games').doc(gameId).update({
+                winner: '',
+                pieces: {
+                    0: '',
+                    1: '',
+                    2: '',
+                    3: '',
+                    4: '',
+                    5: '',
+                    6: '',
+                    7: '',
+                    8: ''
+                }
+                
+            })
+        }else{
+            console.log('not permitted');
+            return response.status(403).send(false);
+        }
+
+    }).then((res)=>{
+            console.log('successfully updated the content');
+           return response.send(true);
+    })
+    .catch((err) => {
+        console.log('error during replay', err);
+        response.status(500).send(false);
+    });
+
+});
+
 function updatePointTransaction(playerId, wonGame){
 
     let scoreDocRef = admin.firestore().collection("scores").doc(playerId);

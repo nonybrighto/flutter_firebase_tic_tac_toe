@@ -24,9 +24,9 @@ class GameBloc {
   final _player2Subject = BehaviorSubject<Player>(seedValue: null);
   final _gameMessageSubject =
       BehaviorSubject<String>(seedValue: 'Tic - Tac - Toe');
-  final _repeatCurrentGameSubject = BehaviorSubject<Null>(seedValue: null);
+  final _replayCurrentGameSubject = BehaviorSubject<Null>(seedValue: null);
   final _handleChallengeSubject = BehaviorSubject<Map>();
-
+  final _allowReplaySubject = BehaviorSubject<bool>(seedValue: false);
   final _playPiece = BehaviorSubject<int>(seedValue: null);
   final _gameTypeSubject = BehaviorSubject<GameType>();
   final _multiNetworkMessage =
@@ -35,8 +35,8 @@ class GameBloc {
 
   //sink
   Function(int) get playPiece => (position) => _playPiece.sink.add(position);
-  Function() get repeatCurrentGame =>
-      () => _repeatCurrentGameSubject.sink.add(null);
+  Function() get replayCurrentGame =>
+      () => _replayCurrentGameSubject.sink.add(null);
   Function(String, String, String, String, String, String, ChallengeHandleType)
       get handleChallenge => (senderId, senderName, senderFcmToken, receiverId,
               receiverName, receiverFcmToken, challengeHandleType) =>
@@ -61,6 +61,7 @@ class GameBloc {
   Stream<String> get gameMessage => _gameMessageSubject.stream;
   Stream<String> get multiNetworkMessage => _multiNetworkMessage.stream;
   Stream<bool> get multiNetworkStarted => _multiNetworkStarted.stream;
+  Stream<bool> get allowReplay => _allowReplaySubject.stream;
 
   GameBloc({this.gameService, this.userService}) {
     _handleChallengeSubject.stream.listen((challengeDetails) {
@@ -174,13 +175,47 @@ class GameBloc {
       }
     });
 
-    _repeatCurrentGameSubject.withLatestFrom(_currentPlayerSubject,
-        (_, currentPlayer) {
-      return currentPlayer;
-    }).listen((currentPlayer) {
-      _currentBoardC = List.generate(
-          9, (index) => GamePiece(piece: '', pieceType: PieceType.normal));
-      _currentBoardSubject.sink.add(_currentBoardC);
+    _replayCurrentGameSubject.withLatestFrom(Observable.combineLatest2(_currentPlayerSubject, _gameTypeSubject, (currentPlayer, gameType){
+
+        return {
+          'currentPlayer': currentPlayer,
+          'gameType': gameType
+        };
+
+    }),
+        (_, details) {
+      return details;
+    }).listen((details) async{
+
+      Player currentPlayer = details['currentPlayer'];
+      GameType gameType = details['gameType'];
+
+      if(gameType == GameType.multi_network){
+
+
+       List<Player> players = await Observable.combineLatest2(_player1Subject, _player2Subject, (Player player1, Player player2){
+
+            return <Player>[player1, player2];
+        }).first;
+
+        String gameId = players[0].user.id+'_'+players[1].user.id;
+        User currentUser  = await userService.getCurrentUser();
+
+        try{
+          bool repeat = await gameService.replayGame(gameId, currentUser.id);
+          if(repeat){
+            _allowReplaySubject.sink.add(false);
+          }
+        }catch(err){
+
+          print(err);
+        }
+
+      }else{
+        _currentBoardC = List.generate(
+            9, (index) => GamePiece(piece: '', pieceType: PieceType.normal));
+        _currentBoardSubject.sink.add(_currentBoardC);
+      }
 
       _gameMessageSubject.sink.add(currentPlayer.user.name + "'s turn");
       _gameOver = false;
@@ -243,16 +278,8 @@ class GameBloc {
             Player playerWithId = [player1, player2].firstWhere((player) => player.user.id == idToUse);
             currentSetPlayer = playerWithId;
         }else{
-          //  if (currentPlayer.user.id == player1.user.id) {
-          //         _currentPlayerSubject.sink.add(player2);
-          //       _gameMessageSubject.sink.add(player2.user.name + "'s turn"+tempString);  
-          //     } else {
-          //       _currentPlayerSubject.sink.add(player1);
-          //       _gameMessageSubject.sink.add(player1.user.name + "'s turn"+tempString);
-          //   }
             Player swappedCurrentPlayer = [player1, player2].firstWhere((player) => player.user.id != currentPlayer.user.id);
             currentSetPlayer = swappedCurrentPlayer;
-            
         }
          _currentPlayerSubject.sink.add(currentSetPlayer);
          _gameMessageSubject.sink.add(currentSetPlayer.user.name + "'s turn"+tempString);
@@ -287,12 +314,14 @@ class GameBloc {
               _currentBoardSubject.sink.add(_currentBoardC);
               _changePlayerTurn(false, idToUse: gameData['currentPlayer']);
               _gameMessageSubject.sink.add(gameWinner.user.name + ' wins!!!');
+              _allowReplaySubject.sink.add(true);
               _gameOver = true;
 
            }else if(gameData['winner'] == 'tie'){
                   print('its a tie');
                   //TODO: handle tie option including making it the time play again button shows up
                   _gameMessageSubject.sink.add("It's a tie !!!");
+                  _allowReplaySubject.sink.add(true);
                   _gameOver = true;
            }else{
             _changePlayerTurn(false, idToUse: gameData['currentPlayer']);
@@ -344,10 +373,11 @@ class GameBloc {
     _currentPlayerSubject.close();
     _player1Subject.close();
     _player2Subject.close();
-    _repeatCurrentGameSubject.close();
+    _replayCurrentGameSubject.close();
     _handleChallengeSubject.close();
     _gameTypeSubject.close();
     _multiNetworkMessage.close();
     _multiNetworkStarted.close();
+    _allowReplaySubject.close();
   }
 }

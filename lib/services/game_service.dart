@@ -60,6 +60,32 @@ class GameService{
 
 
 }
+
+ Future<bool> replayGame(String gameId, String playerId) async{
+
+    String url = 'https://us-central1-tic-tac-toe-a69ee.cloudfunctions.net/replayGame?gameId='+gameId+'&playerId='+playerId;
+
+    print(url);
+
+    try{  
+        final response =
+          await http.get(url); 
+
+        if (response.statusCode == 200) {
+          // If server returns an OK response, parse the JSON
+          return true;
+        } else {
+          // If that response was not OK, throw an error.
+          throw Exception('error from server');
+        }
+    }catch(err){
+        throw Exception('error while trying to repeat');
+    }
+
+
+}
+
+
 }
 
 

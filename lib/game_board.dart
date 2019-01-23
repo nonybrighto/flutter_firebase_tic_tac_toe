@@ -66,9 +66,16 @@ class _GameBoardState extends State<GameBoard> {
                 child: Center(child: _playBox()),
               ),
             ),
-            _menuButton('PLAY AGAIN', () {
-              _gameBloc.repeatCurrentGame();
-            })
+            StreamBuilder<bool>(
+              initialData: false,
+              stream: _gameBloc.allowReplay,
+              builder: (context, allowReplaySnapshot){
+
+                return (allowReplaySnapshot.data)?_menuButton('PLAY AGAIN', () {
+                  _gameBloc.replayCurrentGame();
+                }): Container();
+              },
+            )
           ],
         ),
       ),
