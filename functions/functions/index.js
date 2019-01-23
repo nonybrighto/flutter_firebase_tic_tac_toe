@@ -183,28 +183,71 @@ exports.playPiece = functions.https.onRequest((request, response) => {
                     [pieceUpdateKey]: piece
                     
                 };
-                //taken out of gameUpdate. Needs es2018
-                //...(winner !== '' && {winner: playerId}),
-                //...(winner !== '' && winner !== 'tie' && {[scoreUpdateKey]: playersCurrentScore}),
                 if(winner !== ''){
                     gameUpdate.winner = winner;
                 }
                 if(winner !== '' && winner !== 'tie'){
                     gameUpdate[scoreUpdateKey] = playersCurrentScore + 1;
                 }
-                return admin.firestore().collection('games').doc(gameId).update(gameUpdate);
+                return Promise.all([winner, nextPlayer, admin.firestore().collection('games').doc(gameId).update(gameUpdate)]);
           
             }else{
                return response.send('Not your turn');
            }
         }).then((result) => {
+
+                let winner = result[0];
+                let looser = result[1];
                 console.log('Successfully played piece!');
+                if(result[0] !== '' && result[0] !== 'tie'){
+
+                    return Promise.all([
+                        updatePointTransaction(winner, true),
+                        updatePointTransaction(looser, false),
+                    ]);
+                }
                 return response.send(true);
-        }).catch((err) => {
+        }).then((result) => {
+                console.log('Score has been updated sucessfully');
+                return response.send(true);
+        })
+        .catch((err) => {
             console.log('Error playing piece:', err);
             response.send(false);
         });
 });
+
+function updatePointTransaction(playerId, wonGame){
+
+    let scoreDocRef = admin.firestore().collection("scores").doc(playerId);
+    return  admin.firestore().runTransaction((transaction) => {
+        // This code may get re-run multiple times if there are conflicts.
+        return transaction.get(scoreDocRef).then((sfDoc) => {
+            if (!sfDoc.exists) {
+               return transaction.create(scoreDocRef, {
+                   wins: (wonGame)? 1 : 0,
+                   losses: (wonGame)? 0 : 1,
+                   wonLast: (wonGame)? true : false
+               });
+            }  
+
+            let updateObject = {};
+            if(wonGame){
+                updateObject = {
+                    wonLast:true,
+                    wins:sfDoc.data().wins + 1 
+                }
+            }else{
+                updateObject = {
+                    wonLast:false,
+                    losses:sfDoc.data().losses + 1 
+                }
+            }
+           
+            return transaction.update(scoreDocRef, updateObject);
+        });
+    });
+}
 
 function _isTie(pieces){
 

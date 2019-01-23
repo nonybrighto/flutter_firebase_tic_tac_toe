@@ -282,10 +282,11 @@ class GameBloc {
            if(gameData['winner'].isNotEmpty && gameData['winner'] != 'tie'){
             
               Player gameWinner = await _getPlayerFromId(gameData['winner']);
-              _gameMessageSubject.sink.add(gameWinner.user.name + ' wins!!!');
               List<int> winLine = _getWinLine(_currentBoardC, gameWinner);
               _markWinLineOnBoard(winLine);
               _currentBoardSubject.sink.add(_currentBoardC);
+              _changePlayerTurn(false, idToUse: gameData['currentPlayer']);
+              _gameMessageSubject.sink.add(gameWinner.user.name + ' wins!!!');
               _gameOver = true;
 
            }else if(gameData['winner'] == 'tie'){
