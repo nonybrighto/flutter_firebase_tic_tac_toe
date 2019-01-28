@@ -12,6 +12,7 @@ import 'package:rxdart/rxdart.dart';
 class GameBloc {
   final GameService gameService;
   final UserService userService;
+  StreamSubscription<DocumentSnapshot> _serverGameSub;
 
   List<GamePiece> _currentBoardC = [];
   bool _gameOver = false;
@@ -32,9 +33,11 @@ class GameBloc {
   final _multiNetworkMessage =
       BehaviorSubject<String>(seedValue: 'Tic Tac Toe ...');
   final _multiNetworkStarted = BehaviorSubject<bool>(seedValue: false);
+  final _cancelGameSubject = BehaviorSubject<Null>();
 
   //sink
   Function(int) get playPiece => (position) => _playPiece.sink.add(position);
+  Function() get cancelGame => () => _cancelGameSubject.sink.add(null);
   Function() get replayCurrentGame =>
       () => _replayCurrentGameSubject.sink.add(null);
   Function(String, String, String, String, String, String, ChallengeHandleType)
@@ -62,6 +65,7 @@ class GameBloc {
   Stream<String> get multiNetworkMessage => _multiNetworkMessage.stream;
   Stream<bool> get multiNetworkStarted => _multiNetworkStarted.stream;
   Stream<bool> get allowReplay => _allowReplaySubject.stream;
+ 
 
   GameBloc({this.gameService, this.userService}) {
     _handleChallengeSubject.stream.listen((challengeDetails) {
@@ -175,6 +179,26 @@ class GameBloc {
       }
     });
 
+    _cancelGameSubject.withLatestFrom(_gameTypeSubject, (_, GameType gameType){
+        return gameType;
+    }).listen((GameType gameType) async{
+
+          if(gameType == GameType.multi_network){
+             List<Player> players = await _getPlayers();
+
+            String gameId = players[0].user.id+'_'+players[1].user.id;
+            User currentUser  = await userService.getCurrentUser();
+            try{
+               gameService.cancelGame(gameId, currentUser.id);
+               _serverGameSub.cancel();
+            }catch(err){
+
+              print(err);
+            }
+
+          }
+    });
+
     _replayCurrentGameSubject.withLatestFrom(Observable.combineLatest2(_currentPlayerSubject, _gameTypeSubject, (currentPlayer, gameType){
 
         return {
@@ -192,11 +216,8 @@ class GameBloc {
 
       if(gameType == GameType.multi_network){
 
-
-       List<Player> players = await Observable.combineLatest2(_player1Subject, _player2Subject, (Player player1, Player player2){
-
-            return <Player>[player1, player2];
-        }).first;
+        //get players
+       List<Player> players = await _getPlayers();
 
         String gameId = players[0].user.id+'_'+players[1].user.id;
         User currentUser  = await userService.getCurrentUser();
@@ -291,12 +312,10 @@ class GameBloc {
 
   startServerGame(String player1Id, player2Id) {
     String gameId = player1Id + '_' + player2Id;
-
-    Firestore.instance
-        .collection('games')
-        .document(gameId)
-        .snapshots()
-        .listen((snapshot) async{
+        
+        _serverGameSub = Firestore.instance
+        .collection('games').document(gameId)
+        .snapshots().listen((snapshot) async{
             print(snapshot);
             print('snapshot');
 
@@ -326,7 +345,7 @@ class GameBloc {
            }else{
             _changePlayerTurn(false, idToUse: gameData['currentPlayer']);
            }
-    }).onError((error){
+    })..onError((error){
         print(error);
     });
 
@@ -343,19 +362,23 @@ class GameBloc {
         gamePiece:
             GamePiece(piece: player['gamePiece'], pieceType: PieceType.normal),
         score: player['score'],
-        user: User(id: player['user']['id'], name: player['user']['name']));
+        user: User(id: player['user']['id'], name: player['user']['name'], fcmToken:  player['user']['fcmToken']));
 
     playerSubject.sink.add(gottenPlayer);
   }
 
   Future<Player> _getPlayerFromId(String playerId) async{
 
-    List<Player> players = await Observable.combineLatest2(_player1Subject, _player2Subject, (Player p1, Player p2){
 
-      return<Player>[p1, p2];
-    }).first;
+    List<Player> players = await _getPlayers();
 
     return players.firstWhere((player) => player.user.id == playerId);
+  }
+
+  Future<List<Player>>_getPlayers() async{
+     return await Observable.combineLatest2(_player1Subject, _player2Subject, (Player player1, Player player2){
+            return <Player>[player1, player2];
+        }).first;
   }
 
   _drawNetworkBoard(Map networkPieces) {

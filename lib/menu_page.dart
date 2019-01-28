@@ -52,6 +52,9 @@ class _MenuPageState extends State<MenuPage> {
             case 'reject':
                   //GameBloc message too showing that game was declined ... and gives user option to go to menu.
                   break;
+            case 'gameEnd':
+                  _showGameEndDialog(message);
+                  break;
             default:
                 print('message');
                 break;           
@@ -79,6 +82,37 @@ class _MenuPageState extends State<MenuPage> {
       setState(() {
               username = senderName ?? 'No name';
             });
+
+  }
+
+  _showGameEndDialog(Map<String, dynamic> message) async{
+
+    //TODONOW: get message from notification;
+    Future.delayed(
+      Duration.zero, (){
+
+        showDialog(
+          barrierDismissible: false,
+          context: context,
+          builder: (context) => AlertDialog(
+
+            title: Text('Game Endedn'),
+            content: Text(message['notification']['body']), // get from server
+
+            actions: <Widget>[
+              FlatButton(
+                child: Text('OK'),
+                onPressed: () async{
+                      Navigator.pop(context);
+                      Navigator.of(context).push(MaterialPageRoute(builder: (context) => MenuPage()));
+                },
+              ),
+            ],
+
+          ),
+        );
+      }
+    );
 
   }
 

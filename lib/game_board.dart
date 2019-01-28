@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_firebase_tic_tac_toe/bloc/game_bloc.dart';
 import 'package:flutter_firebase_tic_tac_toe/bloc/bloc_provider.dart';
@@ -17,8 +19,9 @@ class _GameBoardState extends State<GameBoard> {
   @override
   Widget build(BuildContext context) {
     _gameBloc = BlocProvider.of(context).gameBloc;
-
-    return Scaffold(
+    return WillPopScope(
+        onWillPop: _cancelGameDialog,
+        child: Scaffold(
       body: Padding(
         padding: const EdgeInsets.fromLTRB(20.0, 40.0, 20.0, 20.0),
         child: Column(
@@ -79,7 +82,73 @@ class _GameBoardState extends State<GameBoard> {
           ],
         ),
       ),
+    ),
+
     );
+  }
+
+  Future<bool> _cancelGameDialog(){
+
+    // return showDialog(
+    //   context: context,
+    //   builder: (context) => new AlertDialog(
+    //     title: new Text('Are you sure?'),
+    //     content: new Text('Do you want to exit an App'),
+    //     actions: <Widget>[
+    //       new FlatButton(
+    //         onPressed: () => Navigator.of(context).pop(false),
+    //         child: new Text('No'),
+    //       ),
+    //       new FlatButton(
+    //         onPressed: () => Navigator.of(context).pop(true),
+    //         child: new Text('Yes'),
+    //       ),
+    //     ],
+    //   ),
+    // ) ?? false;
+    
+    return showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+
+          title: Text('Cancel Game'),
+          content: Text('Do you wish to cancel the current game?'),
+          actions: <Widget>[
+            FlatButton(
+                child: Text('YES'),
+                onPressed: () async{
+                      _gameBloc.cancelGame();
+                      Navigator.of(context).pop(true);
+                     // Navigator.of(context).push(MaterialPageRoute(builder: (context) => MenuPage()));
+                },
+              ),
+              FlatButton(
+                child: Text('NO'),
+                onPressed: () async{
+                     Navigator.of(context).pop(false);
+                },
+              ),
+          ],
+      )
+    )??false;
+
+    // return showDialog(
+    //   context: context,
+    //   child: new AlertDialog(
+    //     title: new Text('Are you sure?'),
+    //     content: new Text('Unsaved data will be lost.'),
+    //     actions: <Widget>[
+    //       new FlatButton(
+    //         onPressed: () => Navigator.of(context).pop(false),
+    //         child: new Text('No'),
+    //       ),
+    //       new FlatButton(
+    //         onPressed: () => Navigator.of(context).pop(true),
+    //         child: new Text('Yes'),
+    //       ),
+    //     ],
+    //   ),
+    // ) ?? false;
   }
 
   _playBox() {
