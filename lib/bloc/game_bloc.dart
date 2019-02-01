@@ -29,7 +29,7 @@ class GameBloc {
   final _handleChallengeSubject = BehaviorSubject<Map>();
   final _allowReplaySubject = BehaviorSubject<bool>(seedValue: false);
   final _playPiece = BehaviorSubject<int>(seedValue: null);
-  final _gameTypeSubject = BehaviorSubject<GameType>();
+  final _gameTypeSubject = BehaviorSubject<GameType>(seedValue: GameType.computer);
   final _multiNetworkMessage =
       BehaviorSubject<String>(seedValue: 'Tic Tac Toe ...');
   final _multiNetworkStarted = BehaviorSubject<bool>(seedValue: false);

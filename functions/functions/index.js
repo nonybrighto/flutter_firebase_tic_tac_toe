@@ -310,8 +310,8 @@ exports.cancelGame = functions.https.onRequest((request, response) => {
             }
         };
         return Promise.all([admin.messaging().sendToTopic(gameId, message),
-                        _changeUserState(player1.user.id, 'online'),
-                        _changeUserState(player2.user.id, 'online')]);
+                        _changeUserState(player1.user.id, 'available'),
+                        _changeUserState(player2.user.id, 'available')]);
 
     }).then((res) => {
         console.log('successfully cancelled');
@@ -324,37 +324,69 @@ exports.cancelGame = functions.https.onRequest((request, response) => {
 
 });
 
-function updatePointTransaction(playerId, wonGame) {
+// exports.onUserStatusChanged = functions.database
+//   .ref('/status/{userId}') // Reference to the Firebase RealTime database key
+//   .onUpdate(event => {
+//       console.log('status updated');
+//       console.log(event);
+//       const usersRef = admin.firestore().collection('/users');
 
-    let scoreDocRef = admin.firestore().collection("scores").doc(playerId);
-    return admin.firestore().runTransaction((transaction) => {
-        // This code may get re-run multiple times if there are conflicts.
-        return transaction.get(scoreDocRef).then((sfDoc) => {
-            if (!sfDoc.exists) {
-                return transaction.create(scoreDocRef, {
-                    wins: (wonGame) ? 1 : 0,
-                    losses: (wonGame) ? 0 : 1,
-                    wonLast: (wonGame) ? true : false
-                });
-            }
+//       console.log(event.data);
+//       console.log(event.data.state);
+      
+//       return event.data.ref.once('value')
+//       .then(statusSnapshot => snapShot.val())
+//       .then(status => {
 
-            let updateObject = {};
-            if (wonGame) {
-                updateObject = {
-                    wonLast: true,
-                    wins: sfDoc.data().wins + 1
-                }
-            } else {
-                updateObject = {
-                    wonLast: false,
-                    losses: sfDoc.data().losses + 1
-                }
-            }
+//         console.log('This is the status stuff '+ status);
+        
+//          return usersRef
+//             .doc(event.params.userId)
+//             .set({
+//               currentState: status
+//             }, { merge: true });
+//       })
+// });
+exports.onUserStatusChanged = functions.database.ref('/status/{userId}').onUpdate(
+    (change, context) => {
+      // Get the data written to Realtime Database
+      const eventStatus = change.after.val();
+      console.log(eventStatus);
+      console.log(eventStatus.state);
+      console.log(context.params.userId);
 
-            return transaction.update(scoreDocRef, updateObject);
-        });
+      const usersRef = admin.firestore().collection('/users');
+
+      return usersRef
+            .doc(context.params.userId)
+            .set({
+              currentState: eventStatus.state
+            }, { merge: true });
+
+    //   // Then use other event data to create a reference to the
+    //   // corresponding Firestore document.
+    //   const userStatusFirestoreRef = firestore.doc(`status/${context.params.uid}`);
+
+    //   // It is likely that the Realtime Database change that triggered
+    //   // this event has already been overwritten by a fast change in
+    //   // online / offline status, so we'll re-read the current data
+    //   // and compare the timestamps.
+    //   return change.after.ref.once('value').then((statusSnapshot) => {
+    //     const status = statusSnapshot.val();
+    //     console.log(status, eventStatus);
+    //     // If the current timestamp for this data is newer than
+    //     // the data that triggered this event, we exit this function.
+    //     if (status.last_changed > eventStatus.last_changed) {
+    //       return null;
+    //     }
+
+    //     // Otherwise, we convert the last_changed field to a Date
+    //     eventStatus.last_changed = new Date(eventStatus.last_changed);
+
+    //     // ... and write it to Firestore.
+    //     return userStatusFirestoreRef.set(eventStatus);
+     // });
     });
-}
 
 function _isTie(pieces) {
 

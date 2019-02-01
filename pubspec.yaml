@@ -28,6 +28,7 @@ dependencies:
   firebase_messaging: ^2.1.0
   shared_preferences: ^0.4.3
   cloud_functions: ^0.0.5
+  firebase_database: any
 
 dev_dependencies:
   flutter_test:

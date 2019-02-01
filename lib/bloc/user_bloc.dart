@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_firebase_tic_tac_toe/models/User.dart';
 import 'package:flutter_firebase_tic_tac_toe/services/user_service.dart';
+import 'package:flutter_firebase_tic_tac_toe/utils/user_util.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -27,6 +28,7 @@ class UserBloc{
 
   UserBloc({this.userService}){
 
+    userService.checkUserPresence();
 
    _getUsersSubject.stream.listen((_){
           
@@ -38,9 +40,8 @@ class UserBloc{
                  email: null,
                  avatarUrl: null,
                  fcmToken: userSnapshot['fcmToken'],
-                 currentState: UserState.available
+                 currentState: UserUtil().getStateFromString(userSnapshot['currentState'])
                )).toList(); 
-
                _usersSubject.sink.add(users);
           });
 

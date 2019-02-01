@@ -7,6 +7,7 @@ import 'package:flutter_firebase_tic_tac_toe/models/User.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/app_error.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 class UserService {
   FirebaseAuth _auth;
@@ -145,5 +146,28 @@ class UserService {
 
           return User(id: id, name: name, fcmToken:  token );
 
+  }
+
+  checkUserPresence(){
+
+      FirebaseDatabase.instance
+      .reference()
+      .child('.info/connected')
+      .onValue.listen((Event event) async{
+
+        if(event.snapshot.value == false){
+          return;
+        }
+
+          //TODONOW: check if user is available
+          User currentUser = await getCurrentUser();
+          FirebaseDatabase.instance.reference().child('/status/'+currentUser.id).onDisconnect().set({
+            'state': 'offline'
+          }).then((onValue){
+              FirebaseDatabase.instance.reference().child('/status/'+currentUser.id).set({
+                'state': 'available'
+              });
+          });
+      });
   }
 }
