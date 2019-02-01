@@ -127,7 +127,7 @@ class UserService {
       await Firestore.instance
         .collection('users')
         .document(userId)
-        .setData({'fcmToken': fcmToken});
+        .setData({'fcmToken': fcmToken}, merge: true);
   }
 
 

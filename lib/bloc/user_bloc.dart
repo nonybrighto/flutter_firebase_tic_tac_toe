@@ -28,20 +28,33 @@ class UserBloc{
 
   UserBloc({this.userService}){
 
+
+    userService.getCurrentUser().then((user){
+        if(user != null){
+            _currentUserSubject.sink.add(user);
+        }
+    });
+
     userService.checkUserPresence();
 
-   _getUsersSubject.stream.listen((_){
+
+   _getUsersSubject.stream.withLatestFrom(_currentUserSubject, (_ , User currentUser){
+      return currentUser;
+   }).listen((currentUser){
           
           Firestore.instance.collection('users').snapshots().listen((data){
 
-               List<User> users = data.documents.map((userSnapshot) => User(
+               List<User> users = data.documents.map<User>((userSnapshot) => User(
                  id: userSnapshot.documentID,
                  name: userSnapshot['displayName'],
                  email: null,
                  avatarUrl: null,
                  fcmToken: userSnapshot['fcmToken'],
                  currentState: UserUtil().getStateFromString(userSnapshot['currentState'])
-               )).toList(); 
+               )).toList();
+               if(currentUser.id != null){
+                 users = users.where((user) => user.id != currentUser.id).toList();
+               } 
                _usersSubject.sink.add(users);
           });
 
