@@ -34,6 +34,7 @@ class GameBloc {
       BehaviorSubject<String>(seedValue: 'Tic Tac Toe ...');
   final _multiNetworkStarted = BehaviorSubject<bool>(seedValue: false);
   final _cancelGameSubject = BehaviorSubject<Null>();
+  final _startSingleDeviceGame = BehaviorSubject<GameType>();
 
   //sink
   Function(int) get playPiece => (position) => _playPiece.sink.add(position);
@@ -55,6 +56,7 @@ class GameBloc {
 
   Function(GameType) get gameType =>
       (gameType) => _gameTypeSubject.sink.add(gameType);
+  Function(GameType) get startSingleDeviceGame => (gameType) => _startSingleDeviceGame.sink.add(gameType);
 
   //stream
   Stream<List<GamePiece>> get currentBoard => _currentBoardSubject.stream;
@@ -83,20 +85,7 @@ class GameBloc {
 
     _currentBoardC = List.generate(
         9, (index) => GamePiece(piece: '', pieceType: PieceType.normal));
-
-    //TODO: remove
-    _player1Subject.sink.add(Player(
-        user: User(id: 'Peter', name: 'peter', avatarUrl: 'peter'),
-        gamePiece: GamePiece(piece: 'X', pieceType: PieceType.normal),
-        score: 0));
-    _player2Subject.sink.add(Player(
-        user: User(id: 'Ada', name: 'Ada', avatarUrl: 'peter'),
-        gamePiece: GamePiece(piece: 'O', pieceType: PieceType.normal),
-        score: 0));
-    _currentPlayerSubject.sink.add(Player(
-        user: User(id: 'Peter', name: 'peter', avatarUrl: 'peter'),
-        gamePiece: GamePiece(piece: 'X', pieceType: PieceType.normal),
-        score: 0));
+  
 
     final playDetails = Observable.combineLatest4(
         _player1Subject,
@@ -109,6 +98,33 @@ class GameBloc {
         'gameType': gameType,
         'currentPlayer': currentPlayer
       };
+    });
+
+    _startSingleDeviceGame.stream.listen((gameType) async{
+
+          if(gameType == GameType.multi_device){
+
+            _gameTypeSubject.sink.add(gameType);
+            
+             
+              _player1Subject.sink.add(Player(
+                  user:  User(id: 'Player1', name: 'Player1', avatarUrl: 'peter'),
+                  gamePiece: GamePiece(piece: 'X', pieceType: PieceType.normal),
+                  score: 0));
+              _player2Subject.sink.add(Player(
+                  user:  User(id: 'Player2', name: 'Player2', avatarUrl: 'peter'),
+                  gamePiece: GamePiece(piece: 'O', pieceType: PieceType.normal),
+                  score: 0));
+
+              Player currentPlayer = await _player1Subject.first;
+              _currentPlayerSubject.sink.add(currentPlayer);
+              _gameMessageSubject.sink.add(currentPlayer.user.name + "'s turn");
+
+
+          }
+
+          _allowReplaySubject.sink.add(false);
+          _emptyGameBoard();
     });
 
     _playPiece.withLatestFrom(playDetails,
@@ -166,9 +182,11 @@ class GameBloc {
                       player2.gamePiece.copyWith(pieceType: PieceType.normal));
               _player2Subject.sink.add(player2);
             }
+            _allowReplaySubject.sink.add(true);
             _gameOver = true;
           } else if (_isTie(_currentBoardC)) {
             _gameMessageSubject.sink.add("It's a tie !!!");
+            _allowReplaySubject.sink.add(true);
             _gameOver = true;
           } else {
             //change turn
@@ -233,14 +251,18 @@ class GameBloc {
         }
 
       }else{
-        _currentBoardC = List.generate(
-            9, (index) => GamePiece(piece: '', pieceType: PieceType.normal));
-        _currentBoardSubject.sink.add(_currentBoardC);
+        _emptyGameBoard();
       }
 
       _gameMessageSubject.sink.add(currentPlayer.user.name + "'s turn");
       _gameOver = false;
     });
+  }
+
+  _emptyGameBoard(){
+    _currentBoardC = List.generate(
+        9, (index) => GamePiece(piece: '', pieceType: PieceType.normal));
+    _currentBoardSubject.sink.add(_currentBoardC);
   }
 
   _markWinLineOnBoard(List<int> winLine){
@@ -402,5 +424,6 @@ class GameBloc {
     _multiNetworkMessage.close();
     _multiNetworkStarted.close();
     _allowReplaySubject.close();
+    _startSingleDeviceGame.close();
   }
 }

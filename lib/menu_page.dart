@@ -186,12 +186,13 @@ class _MenuPageState extends State<MenuPage> {
             bottom: -75.0,
             child: _bigLetter('O'),
           ),
-          Align(
-            alignment: Alignment.center,
-            child: Column(
+         SingleChildScrollView(
+           child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                
+                SizedBox(
+                  height: 40.0,
+                ),
                 Text(
                   'Tic Tac Toe',
                   style: TextStyle(
@@ -199,17 +200,23 @@ class _MenuPageState extends State<MenuPage> {
                     fontWeight: FontWeight.bold,),
                 ),
                 SizedBox(
-                  height: 80.0,
+                  height: 40.0,
                 ),
                 Text('currentUser - '+username),
                 SizedBox(
-                  height: 80.0,
+                  height: 40.0,
                 ),
 
                 _menuButton('PLAY WITH COMPUTER', (){
                   Navigator.of(context).push(MaterialPageRoute(builder:(index)=> GameBoard()));
                 }),
-                _menuButton('PLAY WITH USER', 
+                 _menuButton('PLAY WITH FRIEND', 
+                  (){
+                  _gameBloc.startSingleDeviceGame(GameType.multi_device);
+                  Navigator.of(context).push(MaterialPageRoute(builder:(index)=> GameBoard()));
+                }
+                ),
+                _menuButton('PLAY WITH USERS', 
                   (){
                   _userBloc.getUsers();
                   Navigator.of(context).push(MaterialPageRoute(builder:(index)=> UsersBoard()));
@@ -235,7 +242,8 @@ class _MenuPageState extends State<MenuPage> {
                 ],)
               ],
             ),
-          )
+        
+         )
         ],
       ),
     );
@@ -244,13 +252,13 @@ class _MenuPageState extends State<MenuPage> {
 
 _menuButton(String text, onPressed) {
   return Padding(
-    padding: const EdgeInsets.only(bottom: 40.0),
+    padding: const EdgeInsets.only(bottom: 30.0),
     child: SizedBox(
       width: 300.0,
       child: RaisedButton(
           color: Color(0XFFF8D320),
           child: Padding(
-            padding: const EdgeInsets.all(25.0),
+            padding: const EdgeInsets.all(20.0),
             child: Text(text, style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),),
           ), onPressed: onPressed),
     ),
