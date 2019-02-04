@@ -297,14 +297,14 @@ class GameBloc {
     _getHighScores.stream.listen((_){
 
         List<ScoreDetail> highScores = [];
-       Firestore.instance.collection('scores').snapshots().listen((scoreSnapshot) async{
+       Firestore.instance.collection('scores').
+       orderBy('wins', descending: true).limit(10).snapshots().listen((scoreSnapshot) async{
 
           if(scoreSnapshot.documents.isNotEmpty){
 
             for(int i = 0 ; i < scoreSnapshot.documents.length; i++){
                DocumentSnapshot userDoc =  await Firestore.instance.collection('users').document(scoreSnapshot.documents[i].documentID).get();
 
-               //ScoreDetail(user: User(id: 'hello', name: 'john'), losses: 10, wins: 90, wonLast: true)
                final userDetails = userDoc.data;
                final scoreDetails = scoreSnapshot.documents[i].data;
                highScores.add(ScoreDetail(user: User(id: userDoc.documentID, name: userDetails['displayName']), losses: scoreDetails['losses'], wins: scoreDetails['wins'], wonLast: scoreDetails['wonLast']));
