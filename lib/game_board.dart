@@ -131,24 +131,6 @@ class _GameBoardState extends State<GameBoard> {
           ],
       )
     )??false;
-
-    // return showDialog(
-    //   context: context,
-    //   child: new AlertDialog(
-    //     title: new Text('Are you sure?'),
-    //     content: new Text('Unsaved data will be lost.'),
-    //     actions: <Widget>[
-    //       new FlatButton(
-    //         onPressed: () => Navigator.of(context).pop(false),
-    //         child: new Text('No'),
-    //       ),
-    //       new FlatButton(
-    //         onPressed: () => Navigator.of(context).pop(true),
-    //         child: new Text('Yes'),
-    //       ),
-    //     ],
-    //   ),
-    // ) ?? false;
   }
 
   _playBox() {
@@ -228,7 +210,7 @@ class _GameBoardState extends State<GameBoard> {
           )),
         ),
         onTap: () {
-          _gameBloc.playPiece(position);
+          _gameBloc.playPiece(position, false);
         },
       ),
     );

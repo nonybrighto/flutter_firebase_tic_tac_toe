@@ -208,6 +208,7 @@ class _MenuPageState extends State<MenuPage> {
                 ),
 
                 _menuButton('PLAY WITH COMPUTER', (){
+                  _gameBloc.startSingleDeviceGame(GameType.computer);
                   Navigator.of(context).push(MaterialPageRoute(builder:(index)=> GameBoard()));
                 }),
                  _menuButton('PLAY WITH FRIEND', 
