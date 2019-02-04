@@ -4,6 +4,7 @@ import 'package:flutter_firebase_tic_tac_toe/models/User.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/game.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/game_piece.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/player.dart';
+import 'package:flutter_firebase_tic_tac_toe/models/score_detail.dart';
 import 'package:flutter_firebase_tic_tac_toe/services/game_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_firebase_tic_tac_toe/services/user_service.dart';
@@ -35,6 +36,9 @@ class GameBloc {
   final _multiNetworkStarted = BehaviorSubject<bool>(seedValue: false);
   final _cancelGameSubject = BehaviorSubject<Null>();
   final _startSingleDeviceGame = BehaviorSubject<GameType>();
+  // final _highscores  = BehaviorSubject<List<ScoreDetail>>(seedValue:  []);
+  final _highscores  = BehaviorSubject<List<ScoreDetail>>(seedValue:  []);
+  final _getHighScores = BehaviorSubject<Null>();
 
   //sink
   Function(int, bool) get playPiece => (position, isAuto) => _playPiece.sink.add({'position':position, 'isAuto': isAuto});
@@ -57,6 +61,7 @@ class GameBloc {
   Function(GameType) get gameType =>
       (gameType) => _gameTypeSubject.sink.add(gameType);
   Function(GameType) get startSingleDeviceGame => (gameType) => _startSingleDeviceGame.sink.add(gameType);
+  Function() get getHighScores => () => _getHighScores.sink.add(null);
 
   //stream
   Stream<List<GamePiece>> get currentBoard => _currentBoardSubject.stream;
@@ -67,6 +72,7 @@ class GameBloc {
   Stream<String> get multiNetworkMessage => _multiNetworkMessage.stream;
   Stream<bool> get multiNetworkStarted => _multiNetworkStarted.stream;
   Stream<bool> get allowReplay => _allowReplaySubject.stream;
+  Stream<List<ScoreDetail>> get highScores => _highscores.stream;
  
 
   GameBloc({this.gameService, this.userService}) {
@@ -287,6 +293,35 @@ class GameBloc {
       _gameMessageSubject.sink.add(currentPlayer.user.name + "'s turn");
       _gameOver = false;
     });
+
+    _getHighScores.stream.listen((_){
+
+        List<ScoreDetail> highScores = [];
+       Firestore.instance.collection('scores').snapshots().listen((scoreSnapshot) async{
+
+          if(scoreSnapshot.documents.isNotEmpty){
+
+            for(int i = 0 ; i < scoreSnapshot.documents.length; i++){
+               DocumentSnapshot userDoc =  await Firestore.instance.collection('users').document(scoreSnapshot.documents[i].documentID).get();
+
+               //ScoreDetail(user: User(id: 'hello', name: 'john'), losses: 10, wins: 90, wonLast: true)
+               final userDetails = userDoc.data;
+               final scoreDetails = scoreSnapshot.documents[i].data;
+               highScores.add(ScoreDetail(user: User(id: userDoc.documentID, name: userDetails['displayName']), losses: scoreDetails['losses'], wins: scoreDetails['wins'], wonLast: scoreDetails['wonLast']));
+               
+            }
+
+            _highscores.sink.add(highScores);
+          }
+
+       })..onError((err){
+         print(err);
+       })..onDone((){
+          print("dddd");
+       });
+      
+
+    });
   }
 
   _playComputerPiece(){
@@ -470,5 +505,7 @@ class GameBloc {
     _multiNetworkStarted.close();
     _allowReplaySubject.close();
     _startSingleDeviceGame.close();
+    _highscores.close();
+    _getHighScores.close();
   }
 }

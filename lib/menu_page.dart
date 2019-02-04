@@ -225,6 +225,7 @@ class _MenuPageState extends State<MenuPage> {
                 ),
                 _menuButton('HIGH SCORE', (){
                   
+                  _gameBloc.getHighScores();
                    Navigator.of(context).push(MaterialPageRoute(builder:(index)=> HighScoreBoard()));
                 }),
 

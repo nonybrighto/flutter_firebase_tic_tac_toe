@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_firebase_tic_tac_toe/bloc/bloc_provider.dart';
+import 'package:flutter_firebase_tic_tac_toe/bloc/game_bloc.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/score_detail.dart';
-import 'package:flutter_firebase_tic_tac_toe/models/User.dart';
 
 class HighScoreBoard extends StatefulWidget {
   HighScoreBoard({Key key}) : super(key: key);
@@ -11,21 +12,29 @@ class HighScoreBoard extends StatefulWidget {
 
 class _HighScoreBoardState extends State<HighScoreBoard> {
 
-
-  List<ScoreDetail>  highScores = [
-         ScoreDetail(user: User(id: 'hello', name: 'john'), losses: 10, wins: 90, wonLast: true),
-         ScoreDetail(user: User(id: 'helloa', name: 'john'), losses: 12, wins: 20, wonLast: false),
-         ScoreDetail(user: User(id: 'hello', name: 'john doe'), losses: 4, wins: 10, wonLast: false),
-         ScoreDetail(user: User(id: 'hello', name: 'john alan'), losses: 10, wins: 19, wonLast: true),
-         ScoreDetail(user: User(id: 'hello', name: 'john'), losses: 10, wins: 19, wonLast: true),
-         ScoreDetail(user: User(id: 'hello', name: 'john'), losses: 10, wins: 19, wonLast: false),
-  ];
+  GameBloc _gameBloc;
 
   @override
   Widget build(BuildContext context) {
+
+    _gameBloc = BlocProvider.of(context).gameBloc;
+
     return Scaffold(
        appBar: AppBar(title: Text('High Score'),),
-       body: ListView.builder(
+       body: StreamBuilder<List<ScoreDetail>>(
+         initialData: null,
+         stream: _gameBloc.highScores,
+         builder: (context, highScoresSnapshot){
+
+           if(!highScoresSnapshot.hasData){
+             return Center(
+               child: CircularProgressIndicator(),
+             );
+           }
+
+         List<ScoreDetail> highScores = highScoresSnapshot.data;
+          
+         return ListView.builder(
          itemCount: (highScores == null)? 1 : highScores.length+1,
          itemBuilder: (context , index){
            if(index == 0){
@@ -45,6 +54,8 @@ class _HighScoreBoardState extends State<HighScoreBoard> {
            }
            index -= 1;
            return _buildDetailBox(highScores[index]);
+         },
+       );
          },
        )
     );
@@ -94,6 +105,6 @@ _buildDetailBox(ScoreDetail highScoreDetial){
 
 _buildLastGameIcon(bool wonLast){
 
-  return (wonLast)?Icon(Icons.arrow_drop_up, color: Colors.green,):
+  return (wonLast)? Icon(Icons.arrow_drop_up, color: Colors.green,):
   Icon(Icons.arrow_drop_down, color: Colors.red,);
 }
