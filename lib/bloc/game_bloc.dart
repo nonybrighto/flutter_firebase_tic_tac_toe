@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter_firebase_tic_tac_toe/models/User.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/game.dart';
@@ -189,7 +190,7 @@ class GameBloc {
           if(gameType == GameType.multi_device || isAuto || (currentPlayer.user.id == 'User')){
 
             _currentBoardC[position] = currentPlayer.gamePiece;
-          final List<int> winLine = _getWinLine(_currentBoardC, currentPlayer);
+          final List<int> winLine = _getWinLine(_currentBoardC, currentPlayer.gamePiece.piece);
           if (winLine.isNotEmpty) {
            
            _markWinLineOnBoard(winLine);
@@ -325,8 +326,8 @@ class GameBloc {
   }
 
   _playComputerPiece(){
-     Future.delayed(Duration(seconds: 1), (){
-                          int bestPostion = _getComputerPlayPosition();
+     Future.delayed(Duration(seconds: 1), ()async{
+                          int bestPostion = await _getComputerPlayPosition();
                           //playPiece(bestPostion, true);
                           _playPiece.sink.add({'position': bestPostion , 'isAuto': true});
 
@@ -353,13 +354,14 @@ class GameBloc {
     return emptyIndex == -1;
   }
 
-  int _getComputerPlayPosition(){
+  Future<int> _getComputerPlayPosition() async{
 
-      return _currentBoardC.indexWhere((gamePiece) => gamePiece.piece == '');
-
+     // return _currentBoardC.indexWhere((gamePiece) => gamePiece.piece == '');
+     Player currentPlayer = await _currentPlayerSubject.first;
+      return _getBestMove(currentPlayer);
   }
 
-  List<int> _getWinLine(List<GamePiece> gameBoard, Player player) {
+  List<int> _getWinLine(List<GamePiece> gameBoard, String playerPiece) {
     List<List<int>> possibleWins = [
       [0, 1, 2],
       [3, 4, 5],
@@ -372,7 +374,6 @@ class GameBloc {
     ];
     for (int i = 0; i < possibleWins.length; i++) {
       List<int> currentPossibleWin = possibleWins[i];
-      String playerPiece = player.gamePiece.piece;
       if (gameBoard[currentPossibleWin[0]].piece == playerPiece &&
           gameBoard[currentPossibleWin[1]].piece == playerPiece &&
           gameBoard[currentPossibleWin[2]].piece == playerPiece) {
@@ -430,7 +431,7 @@ class GameBloc {
            if(gameData['winner'].isNotEmpty && gameData['winner'] != 'tie'){
             
               Player gameWinner = await _getPlayerFromId(gameData['winner']);
-              List<int> winLine = _getWinLine(_currentBoardC, gameWinner);
+              List<int> winLine = _getWinLine(_currentBoardC, gameWinner.gamePiece.piece);
               _markWinLineOnBoard(winLine);
               _currentBoardSubject.sink.add(_currentBoardC);
               _changePlayerTurn(false, idToUse: gameData['currentPlayer']);
@@ -490,6 +491,50 @@ class GameBloc {
         .toList();
     _currentBoardC = pieces;
     _currentBoardSubject.sink.add(_currentBoardC);
+  }
+
+  int _getBestMove(Player player){
+    String playerPiece = player.gamePiece.piece;
+    String opponentPiece = (playerPiece == 'X')?'O':'X';
+    
+    int winningPosition = _checkWinMove(playerPiece);
+    int defencePosition = _checkWinMove(opponentPiece);
+    if(winningPosition != null){
+      return winningPosition;
+    }else if(defencePosition != null){
+      return defencePosition;
+    }else{
+        //play on any random empty position
+        List<int> emptyPos = _emptyPositionOnBoard();
+        int randPos = Random().nextInt(emptyPos.length);
+        return emptyPos[randPos];
+    }
+  }
+
+  _emptyPositionOnBoard(){
+    List<int> emptyPos = [];
+    for(int i = 0 ; i < _currentBoardC.length; i++){
+       if(_currentBoardC[i].piece == ''){
+         emptyPos.add(i);
+       }
+    }
+    return emptyPos;
+  }
+
+  int _checkWinMove(piece){
+    
+    List<int> emptyPos = _emptyPositionOnBoard();
+
+    List<GamePiece> testBoard = []..addAll(_currentBoardC);
+    for(int i = 0 ; i < emptyPos.length; i++){
+        testBoard[emptyPos[i]] = GamePiece(piece: piece, pieceType: PieceType.normal);
+        if(_getWinLine(testBoard, piece).isNotEmpty){
+            return emptyPos[i];
+        }else{
+           testBoard[emptyPos[i]] = GamePiece(piece: '', pieceType: PieceType.normal);
+        }
+    }
+    return null;
   }
 
   close() {
