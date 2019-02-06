@@ -7,4 +7,9 @@ class UserUtil{
       UserState state =UserState.values.firstWhere((userState) => userState.toString().split('.')[1] == userStateString);
       return state;
   }
+
+  getStringFromState(UserState state){
+
+    return state.toString().split('.')[1];
+  }
 }
