@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_facebook_login/flutter_facebook_login.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/User.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/app_error.dart';
+import 'package:flutter_firebase_tic_tac_toe/utils/user_util.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -108,7 +109,7 @@ class UserService {
     await Firestore.instance
         .collection('users')
         .document(user.id)
-        .setData({'email': user.email, 'displayName': user.name, 'fcmToken': user.fcmToken});
+        .setData({'email': user.email, 'displayName': user.name, 'fcmToken': user.fcmToken, 'currentState': UserUtil().getStringFromState(UserState.available)});
   }
 
   Future<Null> _saveUserToPreference(User loggedInUser) async {
