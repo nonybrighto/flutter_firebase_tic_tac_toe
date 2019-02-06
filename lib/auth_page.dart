@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_firebase_tic_tac_toe/bloc/auth_bloc.dart';
 import 'package:flutter_firebase_tic_tac_toe/bloc/bloc_provider.dart';
 import 'package:flutter_firebase_tic_tac_toe/bloc/user_bloc.dart';
+import 'package:flutter_firebase_tic_tac_toe/menu_page.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/User.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/auth.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/bloc_completer.dart';
@@ -227,6 +228,7 @@ class _AuthPageState extends State<AuthPage> implements BlocCompleter<User> {
   @override
   completed(user) {
     _userBloc.changeCurrentUser(user);
+    Navigator.of(context).push((MaterialPageRoute(builder:(context) => MenuPage())));
   }
 
   @override
