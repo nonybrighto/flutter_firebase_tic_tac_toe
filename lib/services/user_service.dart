@@ -159,14 +159,12 @@ class UserService {
         if(event.snapshot.value == false){
           return;
         }
-
-          //TODONOW: check if user is available
           User currentUser = await getCurrentUser();
           FirebaseDatabase.instance.reference().child('/status/'+currentUser.id).onDisconnect().set({
-            'state': 'offline'
+            'state': UserUtil().getStringFromState(UserState.offline)
           }).then((onValue){
               FirebaseDatabase.instance.reference().child('/status/'+currentUser.id).set({
-                'state': 'available'
+                'state': UserUtil().getStringFromState(UserState.available)
               });
           });
       });
