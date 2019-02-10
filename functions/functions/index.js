@@ -16,6 +16,7 @@ exports.handleChallenge = functions.https.onRequest(async (request, response) =>
     let handleType = request.query.handleType;
 
     if (handleType === 'challenge') {
+       
         let message = {
             data: {
                 senderId: senderId,
@@ -32,18 +33,14 @@ exports.handleChallenge = functions.https.onRequest(async (request, response) =>
             token: receiverFcmToken
         };
 
-        // Send a message to the device corresponding to the provided
-        // registration token.
-        admin.messaging().send(message)
-        .then((res) => {
-            // Response is a message ID string.
+        try{
+            await admin.messaging().send(message);
             console.log('Successfully sent message:', res);
             return response.send(true);
-        })
-        .catch((error) => {
+        }catch(error){
             console.log('Error sending message:', error);
             response.send(false);
-        });
+        }
 
     } else if (handleType === 'accept') {
 
@@ -91,21 +88,19 @@ exports.handleChallenge = functions.https.onRequest(async (request, response) =>
                 senderFcmToken: senderFcmToken,
                 notificationType: handleType,
             },
-
             notification: {
                 title: 'Challenge Rejected!!',
                 body: senderName + 'rejected your challenge.'
             },
-
             token: receiverFcmToken
         };
-        admin.messaging().send(message)
-            .then((res) => {
-                return response.send(true);
-            })
-            .catch((error) => {
-                response.send(false);
-            });
+
+        try{
+           await admin.messaging().send(message);
+           return response.send(true);
+        }catch(err){
+            response.send(false);
+        }
     }
 });
 
@@ -123,7 +118,7 @@ exports.playPiece = functions.https.onRequest((request, response) => {
     admin.firestore().collection('games').doc(gameId).get().then((game) => {
 
         let gameData = {};
-        if (game.exists && gameData.currentPlayer === playerId) {
+        if (game.exists && gameData.currentPlayer === playerId) { 
             gameData = game.data()
 
             console.log('The collection response', game.data());
