@@ -32,10 +32,12 @@ class UserBloc{
     userService.getCurrentUser().then((user){
         if(user != null){
             _currentUserSubject.sink.add(user);
+            //TODO: remove comment from the statement below to enable online presence check.
+            // userService.checkUserPresence();
         }
     });
 
-    userService.checkUserPresence();
+   
 
 
    _getUsersSubject.stream.withLatestFrom(_currentUserSubject, (_ , User currentUser){
