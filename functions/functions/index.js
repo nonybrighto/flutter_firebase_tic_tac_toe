@@ -35,11 +35,11 @@ exports.handleChallenge = functions.https.onRequest(async (request, response) =>
 
         try{
             await admin.messaging().send(message);
-            console.log('Successfully sent message:', res);
+            console.log('Successfully sent message:');
             return response.send(true);
         }catch(error){
             console.log('Error sending message:', error);
-            response.send(false);
+            return response.send(false);
         }
 
     } else if (handleType === 'accept') {
@@ -58,6 +58,7 @@ exports.handleChallenge = functions.https.onRequest(async (request, response) =>
         }else{
             notificationMessage = 'Your game is being continued!!!';
         }
+        console.log(notificationMessage);
 
         let message = {
             data: {
@@ -78,7 +79,7 @@ exports.handleChallenge = functions.https.onRequest(async (request, response) =>
 
        }catch(err){
             console.log('Error subscribing to topic:', err);
-            response.send(false);
+            return response.send(false);
        }
 
     } else if (handleType === 'reject') {
@@ -99,111 +100,204 @@ exports.handleChallenge = functions.https.onRequest(async (request, response) =>
            await admin.messaging().send(message);
            return response.send(true);
         }catch(err){
-            response.send(false);
+            return response.send(false);
         }
+    }else{
+        return response.send(false);
     }
 });
 
-exports.playPiece = functions.https.onRequest((request, response) => {
+exports.playPiece = functions.https.onRequest(async (request, response) => {
 
-    let gameId = request.query.gameId;
-    let playerId = request.query.playerId;
-    let position = request.query.position;
-    let piece = '';
+    console.log('In play Piece .........');
 
-    let pieceUpdateKey = 'pieces.' + position;
-    let scoreUpdateKey = '';
-    let playersCurrentScore = 0;
+    try{
+            let gameId = request.query.gameId;
+            let playerId = request.query.playerId;
+            let position = request.query.position;
+            let piece = '';
 
-    admin.firestore().collection('games').doc(gameId).get().then((game) => {
+            let pieceUpdateKey = 'pieces.' + position;
+            let scoreUpdateKey = '';
+            let playersCurrentScore = 0;
 
-        let gameData = {};
-        if (game.exists && gameData.currentPlayer === playerId) { 
-            gameData = game.data()
 
-            console.log('The collection response', game.data());
+            let game = await admin.firestore().collection('games').doc(gameId).get();
+           
 
-            //change the currentPLayer
-            let nextPlayer = '';
-            //TODO: refactor this and use gameData['player1'].gamePiece
-            if (gameData.currentPlayer === gameData.player1.user.id) {
-                nextPlayer = gameData.player2.user.id;
-                piece = gameData.player1.gamePiece;
-                scoreUpdateKey = 'player1.score';
-                playersCurrentScore = gameData.player1.score;
-            } else {
-                nextPlayer = gameData.player1.user.id;
-                piece = gameData.player2.gamePiece;
-                scoreUpdateKey = 'player2.score';
-                playersCurrentScore = gameData.player2.score;
-            }
+            let gameData = {};
+            if (game.exists && game.data().currentPlayer === playerId) { 
+                gameData = game.data();
 
-            let gamePiecesToTest = gameData.pieces;
-            gamePiecesToTest[position] = piece;
+                    console.log('The collection response', game.data());
 
-            let winner = '';
+                    //change the currentPLayer
+                    let nextPlayer = '';
+                    //TODO: refactor this and use gameData['player1'].gamePiece
+                    if (gameData.currentPlayer === gameData.player1.user.id) {
+                        nextPlayer = gameData.player2.user.id;
+                        piece = gameData.player1.gamePiece;
+                        scoreUpdateKey = 'player1.score';
+                        playersCurrentScore = gameData.player1.score;
+                    } else {
+                        nextPlayer = gameData.player1.user.id;
+                        piece = gameData.player2.gamePiece;
+                        scoreUpdateKey = 'player2.score';
+                        playersCurrentScore = gameData.player2.score;
+                    }
 
-            if (_isTie(gamePiecesToTest)) {
-                winner = 'tie';
-            } else if (_hasWin(gamePiecesToTest, piece)) {
-                winner = playerId;
-            }
-            let gameUpdate = {
-                currentPlayer: nextPlayer,
-                [pieceUpdateKey]: piece
+                    let gamePiecesToTest = gameData.pieces;
+                    gamePiecesToTest[position] = piece;
 
-            };
-            if (winner !== '') {
-                gameUpdate.winner = winner;
-            }
-            if (winner !== '' && winner !== 'tie') {
-                gameUpdate[scoreUpdateKey] = playersCurrentScore + 1;
-            }
-            return Promise.all([winner, nextPlayer, admin.firestore().collection('games').doc(gameId).update(gameUpdate)]);
+                    let winner = '';
+                    let looser = '';
 
-        } else {
-            return response.send('Not your turn');
-        }
-    }).then((result) => {
+                    if (_isTie(gamePiecesToTest)) {
+                        winner = 'tie';
+                    } else if (_hasWin(gamePiecesToTest, piece)) {
+                        winner = playerId;
+                        looser = nextPlayer;
+                    }
+                    let gameUpdate = {
+                        currentPlayer: nextPlayer,
+                        [pieceUpdateKey]: piece
 
-        let winner = result[0];
-        let looser = result[1];
-        console.log('Successfully played piece!');
-        if (result[0] !== '' && result[0] !== 'tie') {
+                    };
+                    if (winner !== '') {
+                        gameUpdate.winner = winner;
+                    }
+                    if (winner !== '' && winner !== 'tie') {
+                        gameUpdate[scoreUpdateKey] = playersCurrentScore + 1;
+                    }
+                   
+                    console.log('game update');
+                    console.log(gameUpdate);
+                    await admin.firestore().collection('games').doc(gameId).update(gameUpdate);
+                    console.log(pieceUpdateKey); 
+                    console.log('Successfully played piece!');
+                    if (winner !== '' && winner !== 'tie') {
+                        console.log(winner);
+                        console.log(looser);
+                        await Promise.all([
+                            updatePointTransaction(winner, true),
+                            updatePointTransaction(looser, false),
+                        ]);
+                        console.log('Score has been updated sucessfully');
+                    }
+                    return response.send(true);
 
-            return Promise.all([
-                updatePointTransaction(winner, true),
-                updatePointTransaction(looser, false),
-            ]);
-        }
-        return response.send(true);
-    }).then((result) => {
-        console.log('Score has been updated sucessfully');
-        return response.send(true);
-    })
-        .catch((err) => {
+                } else {
+                    return response.send('Not your turn');
+                }
+
+        }catch(err){
             console.log('Error playing piece:', err);
-            response.send(false);
-        });
+            return response.send(false);
+        }
+
+
+
+
+    // let gameId = request.query.gameId;
+    // let playerId = request.query.playerId;
+    // let position = request.query.position;
+    // let piece = '';
+
+    // let pieceUpdateKey = 'pieces.' + position;
+    // let scoreUpdateKey = '';
+    // let playersCurrentScore = 0;
+
+    // admin.firestore().collection('games').doc(gameId).get().then((game) => {
+
+    //     let gameData = {};
+    //     if (game.exists && game.data().currentPlayer === playerId) { 
+    //         gameData = game.data()
+
+    //         console.log('The collection response', game.data());
+
+    //         //change the currentPLayer
+    //         let nextPlayer = '';
+    //         //TODO: refactor this and use gameData['player1'].gamePiece
+    //         if (gameData.currentPlayer === gameData.player1.user.id) {
+    //             nextPlayer = gameData.player2.user.id;
+    //             piece = gameData.player1.gamePiece;
+    //             scoreUpdateKey = 'player1.score';
+    //             playersCurrentScore = gameData.player1.score;
+    //         } else {
+    //             nextPlayer = gameData.player1.user.id;
+    //             piece = gameData.player2.gamePiece;
+    //             scoreUpdateKey = 'player2.score';
+    //             playersCurrentScore = gameData.player2.score;
+    //         }
+
+    //         let gamePiecesToTest = gameData.pieces;
+    //         gamePiecesToTest[position] = piece;
+
+    //         let winner = '';
+
+    //         if (_isTie(gamePiecesToTest)) {
+    //             winner = 'tie';
+    //         } else if (_hasWin(gamePiecesToTest, piece)) {
+    //             winner = playerId;
+    //         }
+    //         let gameUpdate = {
+    //             currentPlayer: nextPlayer,
+    //             [pieceUpdateKey]: piece
+
+    //         };
+    //         if (winner !== '') {
+    //             gameUpdate.winner = winner;
+    //         }
+    //         if (winner !== '' && winner !== 'tie') {
+    //             gameUpdate[scoreUpdateKey] = playersCurrentScore + 1;
+    //         }
+    //         return Promise.all([winner, nextPlayer, admin.firestore().collection('games').doc(gameId).update(gameUpdate)]);
+
+    //     } else {
+    //         return response.send('Not your turn');
+    //     }
+    // }).then((result) => {
+
+    //     let winner = result[0];
+    //     let looser = result[1];
+    //     console.log('Successfully played piece!');
+    //     if (result[0] !== '' && result[0] !== 'tie') {
+
+    //         return Promise.all([
+    //             updatePointTransaction(winner, true),
+    //             updatePointTransaction(looser, false),
+    //         ]);
+    //     }
+    //     return response.send(true);
+    // }).then((result) => {
+    //     console.log('Score has been updated sucessfully');
+    //     return response.send(true);
+    // })
+    //     .catch((err) => {
+    //         console.log('Error playing piece:', err);
+    //         response.send(false);
+    //     });
 });
 
-exports.replayGame = functions.https.onRequest((request, response) => {
-
-    let gameId = request.query.gameId;
-    let playerId = request.query.playerId;
+exports.replayGame = functions.https.onRequest(async(request, response) => {
 
 
-    admin.firestore().collection('games').doc(gameId).get().then((game) => {
 
-        let gameData = {};
+
+    try{
+
+        let gameId = request.query.gameId;
+        let playerId = request.query.playerId;
+
+        let game = await admin.firestore().collection('games').doc(gameId).get();
         if (game.exists) {
 
-            gameData = game.data();
+           let gameData = game.data();
 
             if (gameData.winner !== ''
                 && (gameData.player1.user.id !== playerId || gameData.player2.user.id !== playerId)) {
 
-                return admin.firestore().collection('games').doc(gameId).update({
+                await admin.firestore().collection('games').doc(gameId).update({
                     winner: '',
                     pieces: {
                         0: '',
@@ -218,6 +312,8 @@ exports.replayGame = functions.https.onRequest((request, response) => {
                     }
 
                 });
+                console.log('successfully updated the content');
+                return response.send(true);
 
             } else {
                 return response.status(403).send(false);
@@ -227,66 +323,158 @@ exports.replayGame = functions.https.onRequest((request, response) => {
             return response.status(404).send(false);
         }
 
-    }).then((res) => {
-        console.log('successfully updated the content');
-        return response.send(true);
-    })
-        .catch((err) => {
-            console.log('error during replay', err);
-            response.status(500).send(false);
-        });
+    }catch(err){
+        console.log('error during replay', err);
+        return response.status(500).send(false);
+    }
+
+
+
+
+    // let gameId = request.query.gameId;
+    // let playerId = request.query.playerId;
+
+
+    // admin.firestore().collection('games').doc(gameId).get().then((game) => {
+
+    //     let gameData = {};
+    //     if (game.exists) {
+
+    //         gameData = game.data();
+
+    //         if (gameData.winner !== ''
+    //             && (gameData.player1.user.id !== playerId || gameData.player2.user.id !== playerId)) {
+
+    //             return admin.firestore().collection('games').doc(gameId).update({
+    //                 winner: '',
+    //                 pieces: {
+    //                     0: '',
+    //                     1: '',
+    //                     2: '',
+    //                     3: '',
+    //                     4: '',
+    //                     5: '',
+    //                     6: '',
+    //                     7: '',
+    //                     8: ''
+    //                 }
+
+    //             });
+
+    //         } else {
+    //             return response.status(403).send(false);
+    //         }
+    //     } else {
+    //         console.log('not permitted');
+    //         return response.status(404).send(false);
+    //     }
+
+    // }).then((res) => {
+    //     console.log('successfully updated the content');
+    //     return response.send(true);
+    // })
+    //     .catch((err) => {
+    //         console.log('error during replay', err);
+    //         response.status(500).send(false);
+    //     });
 
 });
 
-exports.cancelGame = functions.https.onRequest((request, response) => {
+exports.cancelGame = functions.https.onRequest(async(request, response) => {
 
 
-    let gameId = request.query.gameId;
-    let playerId = request.query.playerId;
-
-    admin.firestore().collection('games').doc(gameId).get().then((game) => {
-
-        let gameData = {};
+    try{
+        let gameId = request.query.gameId;
+        let playerId = request.query.playerId;
+    
+        let game = await admin.firestore().collection('games').doc(gameId).get();
         if (game.exists) {
-            gameData = game.data();
+            let gameData = game.data();
+            let player1 = gameData.player1;
+            let player2 = gameData.player2;
+
             if (/*gameData.winner !== '' &&*/
-                (gameData.player1.user.id !== playerId || gameData.player2.user.id !== playerId)) {
+                (player1.user.id !== playerId || player2.user.id !== playerId)) {
                 console.log(gameData);
-                return Promise.all([gameData.player1, gameData.player2, admin.firestore().collection('games').doc(gameId).delete()]);
+                //return Promise.all([gameData.player1, gameData.player2, ]);
+                await admin.firestore().collection('games').doc(gameId).delete();
+                let message = {
+                    data: {
+                        notificationType: 'gameEnd',
+                    },
+
+                    notification: {
+                        title: 'Game ended',
+                        body: `Your game( ${player1.user.name} vs ${player2.user.name}) has been ended!!!`
+                    }
+                };
+                await Promise.all([admin.messaging().sendToTopic(gameId, message),
+                                _changeUserState(player1.user.id, 'available'),
+                                _changeUserState(player2.user.id, 'available')]);
+                console.log('successfully cancelled');
+                return response.send(true);
             } else {
                 return response.status(403).send(false);
             }
+
         } else {
             return response.status(404).send(false);
         }
+    
 
-    }).then((res) => {
+    }catch(err){
 
-        console.log(res);
-        let player1 = res[0];
-        let player2 = res[1];
+        console.log('error during game cancel', err);
+        return response.status(500).send(false);
+    }
 
-        let message = {
-            data: {
-                notificationType: 'gameEnd',
-            },
 
-            notification: {
-                title: 'Game ended',
-                body: `Your game( ${player1.user.name} vs ${player2.user.name}) has been ended!!!`
-            }
-        };
-        return Promise.all([admin.messaging().sendToTopic(gameId, message),
-                        _changeUserState(player1.user.id, 'available'),
-                        _changeUserState(player2.user.id, 'available')]);
+    // let gameId = request.query.gameId;
+    // let playerId = request.query.playerId;
 
-    }).then((res) => {
-        console.log('successfully cancelled');
-        return response.send(true);
-    }).catch(err => {
-            console.log('error during game cancel', err);
-            response.status(500).send(false);
-        })
+    // admin.firestore().collection('games').doc(gameId).get().then((game) => {
+
+    //     let gameData = {};
+    //     if (game.exists) {
+    //         gameData = game.data();
+    //         if (/*gameData.winner !== '' &&*/
+    //             (gameData.player1.user.id !== playerId || gameData.player2.user.id !== playerId)) {
+    //             console.log(gameData);
+    //             return Promise.all([gameData.player1, gameData.player2, admin.firestore().collection('games').doc(gameId).delete()]);
+    //         } else {
+    //             return response.status(403).send(false);
+    //         }
+    //     } else {
+    //         return response.status(404).send(false);
+    //     }
+
+    // }).then((res) => {
+
+    //     console.log(res);
+    //     let player1 = res[0];
+    //     let player2 = res[1];
+
+    //     let message = {
+    //         data: {
+    //             notificationType: 'gameEnd',
+    //         },
+
+    //         notification: {
+    //             title: 'Game ended',
+    //             body: `Your game( ${player1.user.name} vs ${player2.user.name}) has been ended!!!`
+    //         }
+    //     };
+    //     return Promise.all([admin.messaging().sendToTopic(gameId, message),
+    //                     _changeUserState(player1.user.id, 'available'),
+    //                     _changeUserState(player2.user.id, 'available')]);
+
+    // }).then((res) => {
+    //     console.log('successfully cancelled');
+    //     return response.send(true);
+    // }).catch(err => {
+    //         console.log('error during game cancel', err);
+    //         response.status(500).send(false);
+    //     })
 
 
 });
@@ -304,6 +492,38 @@ exports.onUserStatusChanged = functions.database.ref('/status/{userId}').onUpdat
             }, { merge: true });
     });
 
+    function updatePointTransaction(playerId, wonGame){
+
+        let scoreDocRef = admin.firestore().collection("scores").doc(playerId);
+        return  admin.firestore().runTransaction((transaction) => {
+            // This code may get re-run multiple times if there are conflicts.
+            return transaction.get(scoreDocRef).then((sfDoc) => {
+                if (!sfDoc.exists) {
+                   return transaction.create(scoreDocRef, {
+                       wins: (wonGame)? 1 : 0,
+                       losses: (wonGame)? 0 : 1,
+                       wonLast: (wonGame)? true : false
+                   });
+                }  
+    
+                let updateObject = {};
+                if(wonGame){
+                    updateObject = {
+                        wonLast:true,
+                        wins:sfDoc.data().wins + 1 
+                    }
+                }else{
+                    updateObject = {
+                        wonLast:false,
+                        losses:sfDoc.data().losses + 1 
+                    }
+                }
+               
+                return transaction.update(scoreDocRef, updateObject);
+            });
+        });
+    }
+
 function _isTie(pieces) {
     for (let key of Object.keys(pieces)) {
         if (pieces[key] === '') {
@@ -313,6 +533,8 @@ function _isTie(pieces) {
     }
     return true;
 }
+
+
 
 function _hasWin(pieces, playerPiece) {
 
@@ -378,6 +600,8 @@ function _createGame(gameId, receiverId, receiverName, receiverFcmToken, senderI
 
     });
 }
+
+
 
 
 function _changeUserState(userId, state) {
