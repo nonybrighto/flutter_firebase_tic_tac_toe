@@ -145,7 +145,10 @@ class UserService {
           String id = prefs.getString('user_id');
           String name = prefs.getString('user_name');
 
-          return User(id: id, name: name, fcmToken:  token );
+          if(id != null){
+            return User(id: id, name: name, fcmToken:  token );
+          }
+          return null;
 
   }
 
