@@ -53,6 +53,7 @@ class _MenuPageState extends State<MenuPage> {
                   //GameBloc message too showing that game was declined ... and gives user option to go to menu.
                   break;
             case 'gameEnd':
+                    _gameBloc.clearProcessDetails();
                   _showGameEndDialog(message);
                   break;
             default:

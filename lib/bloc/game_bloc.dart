@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:math';
 
 import 'package:flutter_firebase_tic_tac_toe/models/User.dart';
@@ -40,6 +41,8 @@ class GameBloc {
   // final _highscores  = BehaviorSubject<List<ScoreDetail>>(seedValue:  []);
   final _highscores  = BehaviorSubject<List<ScoreDetail>>(seedValue:  []);
   final _getHighScores = BehaviorSubject<Null>();
+  final _clearProcessDetails = BehaviorSubject<Null>();
+  final _startServerGame = BehaviorSubject<Map<String, String>>();
 
   //sink
   Function(int, bool) get playPiece => (position, isAuto) => _playPiece.sink.add({'position':position, 'isAuto': isAuto});
@@ -63,6 +66,8 @@ class GameBloc {
       (gameType) => _gameTypeSubject.sink.add(gameType);
   Function(GameType) get startSingleDeviceGame => (gameType) => _startSingleDeviceGame.sink.add(gameType);
   Function() get getHighScores => () => _getHighScores.sink.add(null);
+  Function() get clearProcessDetails => () => _clearProcessDetails.sink.add(null);
+  Function(String, String) get startServerGame => (player1Id, player2Id) => _startServerGame.sink.add({'player1Id': player1Id, 'player2Id': player2Id});
 
   //stream
   Stream<List<GamePiece>> get currentBoard => _currentBoardSubject.stream;
@@ -323,7 +328,70 @@ class GameBloc {
       
 
     });
+
+
+    _startServerGame.stream.listen((playersId){
+
+      String player1Id = playersId['player1Id'];
+      String player2Id = playersId['player2Id'];
+
+      String gameId = player1Id + '_' + player2Id;
+        
+        _serverGameSub = Firestore.instance
+        .collection('games').document(gameId)
+        .snapshots().listen((snapshot) async{
+            print(snapshot);
+            print('snapshot');
+
+            Map<String, dynamic> gameData = snapshot.data;
+
+            _drawNetworkPlayer(gameData['player1'], _player1Subject);
+            _drawNetworkPlayer(gameData['player2'], _player2Subject);
+            _drawNetworkBoard(gameData['pieces']);
+           
+           if(gameData['winner'].isNotEmpty && gameData['winner'] != 'tie'){
+            
+              Player gameWinner = await _getPlayerFromId(gameData['winner']);
+              List<int> winLine = _getWinLine(_currentBoardC, gameWinner.gamePiece.piece);
+              _markWinLineOnBoard(winLine);
+              _currentBoardSubject.sink.add(_currentBoardC);
+              _changePlayerTurn(false, idToUse: gameData['currentPlayer']);
+              _gameMessageSubject.sink.add(gameWinner.user.name + ' wins!!!');
+              _allowReplaySubject.sink.add(true);
+              _gameOver = true;
+
+           }else if(gameData['winner'] == 'tie'){
+                  print('its a tie');
+                  //TODO: handle tie option including making it the time play again button shows up
+                  _gameMessageSubject.sink.add("It's a tie !!!");
+                  _allowReplaySubject.sink.add(true);
+                  _gameOver = true;
+           }else{
+            _changePlayerTurn(false, idToUse: gameData['currentPlayer']);
+           }
+    })..onError((error){
+        print(error);
+    });
+
+    //get the game from the server and listen for it here
+    _gameTypeSubject.sink.add(GameType.multi_network);
+
+    _multiNetworkMessage.sink
+        .add('Game has been Started! Click button to play');
+    _multiNetworkStarted.sink.add(true);
+
+
+    });
+
+
+
+    _clearProcessDetails.stream.listen((_){
+          _multiNetworkMessage.sink.add('Tic Tac Toe');
+          _multiNetworkStarted.sink.add(false);
+    });
   }
+
+  
 
   _playComputerPiece(){
      Future.delayed(Duration(seconds: 1), ()async{
@@ -411,54 +479,56 @@ class GameBloc {
 
 
     });
+
+
   }
 
-  startServerGame(String player1Id, player2Id) {
-    String gameId = player1Id + '_' + player2Id;
+  // startServerGame(String player1Id, player2Id) {
+  //   String gameId = player1Id + '_' + player2Id;
         
-        _serverGameSub = Firestore.instance
-        .collection('games').document(gameId)
-        .snapshots().listen((snapshot) async{
-            print(snapshot);
-            print('snapshot');
+  //       _serverGameSub = Firestore.instance
+  //       .collection('games').document(gameId)
+  //       .snapshots().listen((snapshot) async{
+  //           print(snapshot);
+  //           print('snapshot');
 
-            Map<String, dynamic> gameData = snapshot.data;
+  //           Map<String, dynamic> gameData = snapshot.data;
 
-            _drawNetworkPlayer(gameData['player1'], _player1Subject);
-            _drawNetworkPlayer(gameData['player2'], _player2Subject);
-            _drawNetworkBoard(gameData['pieces']);
+  //           _drawNetworkPlayer(gameData['player1'], _player1Subject);
+  //           _drawNetworkPlayer(gameData['player2'], _player2Subject);
+  //           _drawNetworkBoard(gameData['pieces']);
            
-           if(gameData['winner'].isNotEmpty && gameData['winner'] != 'tie'){
+  //          if(gameData['winner'].isNotEmpty && gameData['winner'] != 'tie'){
             
-              Player gameWinner = await _getPlayerFromId(gameData['winner']);
-              List<int> winLine = _getWinLine(_currentBoardC, gameWinner.gamePiece.piece);
-              _markWinLineOnBoard(winLine);
-              _currentBoardSubject.sink.add(_currentBoardC);
-              _changePlayerTurn(false, idToUse: gameData['currentPlayer']);
-              _gameMessageSubject.sink.add(gameWinner.user.name + ' wins!!!');
-              _allowReplaySubject.sink.add(true);
-              _gameOver = true;
+  //             Player gameWinner = await _getPlayerFromId(gameData['winner']);
+  //             List<int> winLine = _getWinLine(_currentBoardC, gameWinner.gamePiece.piece);
+  //             _markWinLineOnBoard(winLine);
+  //             _currentBoardSubject.sink.add(_currentBoardC);
+  //             _changePlayerTurn(false, idToUse: gameData['currentPlayer']);
+  //             _gameMessageSubject.sink.add(gameWinner.user.name + ' wins!!!');
+  //             _allowReplaySubject.sink.add(true);
+  //             _gameOver = true;
 
-           }else if(gameData['winner'] == 'tie'){
-                  print('its a tie');
-                  //TODO: handle tie option including making it the time play again button shows up
-                  _gameMessageSubject.sink.add("It's a tie !!!");
-                  _allowReplaySubject.sink.add(true);
-                  _gameOver = true;
-           }else{
-            _changePlayerTurn(false, idToUse: gameData['currentPlayer']);
-           }
-    })..onError((error){
-        print(error);
-    });
+  //          }else if(gameData['winner'] == 'tie'){
+  //                 print('its a tie');
+  //                 //TODO: handle tie option including making it the time play again button shows up
+  //                 _gameMessageSubject.sink.add("It's a tie !!!");
+  //                 _allowReplaySubject.sink.add(true);
+  //                 _gameOver = true;
+  //          }else{
+  //           _changePlayerTurn(false, idToUse: gameData['currentPlayer']);
+  //          }
+  //   })..onError((error){
+  //       print(error);
+  //   });
 
-    //get the game from the server and listen for it here
-    _gameTypeSubject.sink.add(GameType.multi_network);
+  //   //get the game from the server and listen for it here
+  //   _gameTypeSubject.sink.add(GameType.multi_network);
 
-    _multiNetworkMessage.sink
-        .add('Game has been Started! Click button to play');
-    _multiNetworkStarted.sink.add(true);
-  }
+  //   _multiNetworkMessage.sink
+  //       .add('Game has been Started! Click button to play');
+  //   _multiNetworkStarted.sink.add(true);
+  // }
 
   _drawNetworkPlayer(Map player, playerSubject) {
     Player gottenPlayer = Player(
@@ -485,7 +555,12 @@ class GameBloc {
   }
 
   _drawNetworkBoard(Map networkPieces) {
-    List<GamePiece> pieces = networkPieces.values
+    
+    //Added this bcus the map gotten from firebase is not in a specific order.
+    final sortedMap = SplayTreeMap<dynamic, dynamic>();
+    sortedMap.addAll(networkPieces);
+
+    List<GamePiece> pieces = sortedMap.values
         .toList()
         .map((piece) => GamePiece(piece: piece, pieceType: PieceType.normal))
         .toList();
@@ -552,5 +627,7 @@ class GameBloc {
     _startSingleDeviceGame.close();
     _highscores.close();
     _getHighScores.close();
+    _clearProcessDetails.close();
+    _startServerGame.close();
   }
 }
