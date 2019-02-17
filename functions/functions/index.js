@@ -58,6 +58,8 @@ exports.handleChallenge = functions.https.onRequest(async (request, response) =>
         }
         console.log(notificationMessage);
 
+        _changeGamePlayersState(senderId, receiverId, 'playing');
+
         let message = {
             data: {
                 player1Id: receiverId, // The player that sent the challenge is player1
@@ -225,6 +227,18 @@ exports.replayGame = functions.https.onRequest(async(request, response) => {
 
                 });
                 console.log('successfully updated the content');
+                let message = {
+                    data: {
+                        notificationType: 'replayGame',
+                    },
+                    notification: {
+                        title: 'replay',
+                        body: `replay current game`
+                    }
+
+                };
+                await admin.messaging().sendToTopic(gameId, message);
+                console.log('sent to gameId'+ gameId);
                 return response.send(true);
 
             } else {
@@ -272,7 +286,10 @@ exports.cancelGame = functions.https.onRequest(async(request, response) => {
                 };
                 await Promise.all([admin.messaging().sendToTopic(gameId, message),
                                 _changeUserState(player1.user.id, 'available'),
-                                _changeUserState(player2.user.id, 'available')]);
+                                _changeUserState(player2.user.id, 'available'),
+                                _changeGamePlayersState(player1.user.id,player2.user.id,'available')
+                            ]);
+                    
                 console.log('successfully cancelled');
                 return response.send(true);
             } else {
@@ -374,6 +391,15 @@ function _hasWin(pieces, playerPiece) {
     }
     console.log('win false');
     return false;
+}
+
+async function _changeGamePlayersState(player1Id, player2Id, state){
+
+    const usersRef = admin.firestore().collection('/users');
+    await Promise.all([
+            usersRef.doc(player1Id).set({currentState: state}, {merge:true}),
+            usersRef.doc(player2Id).set({currentState: state}, {merge:true})
+    ]);
 }
 
 function _createGame(gameId, receiverId, receiverName, receiverFcmToken, senderId, senderName, senderFcmToken){

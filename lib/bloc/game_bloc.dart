@@ -68,6 +68,7 @@ class GameBloc {
   Function() get getHighScores => () => _getHighScores.sink.add(null);
   Function() get clearProcessDetails => () => _clearProcessDetails.sink.add(null);
   Function(String, String) get startServerGame => (player1Id, player2Id) => _startServerGame.sink.add({'player1Id': player1Id, 'player2Id': player2Id});
+  Function(bool) get changeAllowReplay => (allowReplay) => _allowReplaySubject.sink.add(allowReplay);
 
   //stream
   Stream<List<GamePiece>> get currentBoard => _currentBoardSubject.stream;
@@ -279,10 +280,7 @@ class GameBloc {
         User currentUser  = await userService.getCurrentUser();
 
         try{
-          bool repeat = await gameService.replayGame(gameId, currentUser.id);
-          if(repeat){
-            _allowReplaySubject.sink.add(false);
-          }
+          await gameService.replayGame(gameId, currentUser.id);
         }catch(err){
 
           print(err);

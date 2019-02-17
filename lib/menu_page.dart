@@ -49,6 +49,9 @@ class _MenuPageState extends State<MenuPage> {
                   //TODO:gameBlocMessage that shows on the process page and allows button to display
                   _gameBloc.startServerGame(message['data']['player1Id'], message['data']['player2Id']);
                   break;
+            case 'replayGame':
+                  _gameBloc.changeAllowReplay(false);
+                  break;
             case 'reject':
                   //GameBloc message too showing that game was declined ... and gives user option to go to menu.
                   break;
