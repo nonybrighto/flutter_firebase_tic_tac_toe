@@ -1,5 +1,6 @@
 const functions = require('firebase-functions');
 var admin = require('firebase-admin');
+var app = admin.initializeApp();
 
 //NB: No major security feature implemented such as CSRF protection
 
