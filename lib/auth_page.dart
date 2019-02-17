@@ -31,12 +31,15 @@ class _AuthPageState extends State<AuthPage> implements BlocCompleter<User> {
   AuthBloc _authBloc;
   UserBloc _userBloc;
 
+  bool signUp = false;
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     _authBloc = AuthBloc(new UserService(), this);
     _validator = Validator();
+    signUp = widget.signUp;
   }
 
   @override
@@ -59,7 +62,7 @@ class _AuthPageState extends State<AuthPage> implements BlocCompleter<User> {
                       SizedBox(
                         height: 30.0,
                       ),
-                      (widget.signUp)
+                      (signUp)
                           ? _authTextField(
                               controller: _usernameController,
                               hintText: 'john_doe',
@@ -102,7 +105,7 @@ class _AuthPageState extends State<AuthPage> implements BlocCompleter<User> {
                                   child: (loadStatus == LoadStatus.loading)
                                       ? CircularProgressIndicator()
                                       : Text(
-                                          (widget.signUp) ? 'SIGN UP' : 'LOGIN',
+                                          (signUp) ? 'SIGN UP' : 'LOGIN',
                                           style: TextStyle(
                                               fontSize: 22.0,
                                               fontWeight: FontWeight.bold),
@@ -112,7 +115,7 @@ class _AuthPageState extends State<AuthPage> implements BlocCompleter<User> {
                                     ? null
                                     : () {
                                         if (_formKey.currentState.validate()) {
-                                          if (widget.signUp) {
+                                          if (signUp) {
                                             _authBloc.signUp(
                                                 _usernameController.text,
                                                 _emailController.text,
@@ -131,23 +134,23 @@ class _AuthPageState extends State<AuthPage> implements BlocCompleter<User> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: <Widget>[
                           Text(
-                            (widget.signUp)
+                            (signUp)
                                 ? 'Already registered?'
                                 : 'Need to join ?',
                             style: TextStyle(fontSize: 20.0),
                           ),
                           FlatButton(
                             child: Text(
-                              (widget.signUp) ? 'Login' : 'Sign Up',
+                              (signUp) ? 'Login' : 'Sign Up',
                               style: TextStyle(
                                 color: Color(0xFF206efe),
                                 fontSize: 20.0,
                               ),
                             ),
                             onPressed: () {
-                              Navigator.of(context).push(MaterialPageRoute(
-                                  builder: (index) =>
-                                      AuthPage(!widget.signUp)));
+                              setState(() {
+                               signUp = !signUp; 
+                              });
                             },
                           )
                         ],
