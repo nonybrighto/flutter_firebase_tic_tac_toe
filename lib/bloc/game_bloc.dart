@@ -481,53 +481,6 @@ class GameBloc {
 
   }
 
-  // startServerGame(String player1Id, player2Id) {
-  //   String gameId = player1Id + '_' + player2Id;
-        
-  //       _serverGameSub = Firestore.instance
-  //       .collection('games').document(gameId)
-  //       .snapshots().listen((snapshot) async{
-  //           print(snapshot);
-  //           print('snapshot');
-
-  //           Map<String, dynamic> gameData = snapshot.data;
-
-  //           _drawNetworkPlayer(gameData['player1'], _player1Subject);
-  //           _drawNetworkPlayer(gameData['player2'], _player2Subject);
-  //           _drawNetworkBoard(gameData['pieces']);
-           
-  //          if(gameData['winner'].isNotEmpty && gameData['winner'] != 'tie'){
-            
-  //             Player gameWinner = await _getPlayerFromId(gameData['winner']);
-  //             List<int> winLine = _getWinLine(_currentBoardC, gameWinner.gamePiece.piece);
-  //             _markWinLineOnBoard(winLine);
-  //             _currentBoardSubject.sink.add(_currentBoardC);
-  //             _changePlayerTurn(false, idToUse: gameData['currentPlayer']);
-  //             _gameMessageSubject.sink.add(gameWinner.user.name + ' wins!!!');
-  //             _allowReplaySubject.sink.add(true);
-  //             _gameOver = true;
-
-  //          }else if(gameData['winner'] == 'tie'){
-  //                 print('its a tie');
-  //                 //TODO: handle tie option including making it the time play again button shows up
-  //                 _gameMessageSubject.sink.add("It's a tie !!!");
-  //                 _allowReplaySubject.sink.add(true);
-  //                 _gameOver = true;
-  //          }else{
-  //           _changePlayerTurn(false, idToUse: gameData['currentPlayer']);
-  //          }
-  //   })..onError((error){
-  //       print(error);
-  //   });
-
-  //   //get the game from the server and listen for it here
-  //   _gameTypeSubject.sink.add(GameType.multi_network);
-
-  //   _multiNetworkMessage.sink
-  //       .add('Game has been Started! Click button to play');
-  //   _multiNetworkStarted.sink.add(true);
-  // }
-
   _drawNetworkPlayer(Map player, playerSubject) {
     Player gottenPlayer = Player(
         gamePiece:

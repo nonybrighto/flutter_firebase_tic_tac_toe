@@ -52,8 +52,8 @@ class _MenuPageState extends State<MenuPage> {
             case 'replayGame':
                   _gameBloc.changeAllowReplay(false);
                   break;
-            case 'reject':
-                  //GameBloc message too showing that game was declined ... and gives user option to go to menu.
+            case 'rejected':
+                  _showGameRejectedDialog(message);
                   break;
             case 'gameEnd':
                     _gameBloc.clearProcessDetails();
@@ -90,8 +90,6 @@ class _MenuPageState extends State<MenuPage> {
   }
 
   _showGameEndDialog(Map<String, dynamic> message) async{
-
-    //TODONOW: get message from notification;
     Future.delayed(
       Duration.zero, (){
 
@@ -100,7 +98,7 @@ class _MenuPageState extends State<MenuPage> {
           context: context,
           builder: (context) => AlertDialog(
 
-            title: Text('Game Endedn'),
+            title: Text('Game Ended!'),
             content: Text(message['notification']['body']), // get from server
 
             actions: <Widget>[
@@ -119,7 +117,34 @@ class _MenuPageState extends State<MenuPage> {
     );
 
   }
+_showGameRejectedDialog(Map<String, dynamic> message) async{
+    Future.delayed(
+      Duration.zero, (){
 
+        showDialog(
+          barrierDismissible: false,
+          context: context,
+          builder: (context) => AlertDialog(
+
+            title: Text('Game Rejected!'),
+            content: Text(message['notification']['body']), // get from server
+
+            actions: <Widget>[
+              FlatButton(
+                child: Text('OK'),
+                onPressed: () async{
+                      Navigator.pop(context);
+                      Navigator.of(context).push(MaterialPageRoute(builder: (context) => MenuPage()));
+                },
+              ),
+            ],
+
+          ),
+        );
+      }
+    );
+
+  }
 
   _showAcceptanceDialog(Map<String, dynamic> message) async{
 

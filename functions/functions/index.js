@@ -86,13 +86,11 @@ exports.handleChallenge = functions.https.onRequest(async (request, response) =>
     } else if (handleType === 'reject') {
         let message = {
             data: {
-                senderId: senderId,
-                senderFcmToken: senderFcmToken,
-                notificationType: handleType,
+                notificationType: 'rejected',
             },
             notification: {
                 title: 'Challenge Rejected!!',
-                body: senderName + 'rejected your challenge.'
+                body: senderName + ' rejected your challenge.'
             },
             token: receiverFcmToken
         };
