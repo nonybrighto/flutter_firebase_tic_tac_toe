@@ -21,6 +21,7 @@ exports.handleChallenge = functions.https.onRequest(async (request, response) =>
                 senderId: senderId,
                 senderName: senderName,
                 senderFcmToken: senderFcmToken,
+                click_action: "FLUTTER_NOTIFICATION_CLICK",
                 notificationType: 'challenge',
             },
 
@@ -67,6 +68,7 @@ exports.handleChallenge = functions.https.onRequest(async (request, response) =>
                 player2Id: senderId,
                 player1Name: receiverName,
                 player2Name: senderName,
+                click_action: "FLUTTER_NOTIFICATION_CLICK",
                 notificationType: 'started',
             },
 
@@ -86,6 +88,7 @@ exports.handleChallenge = functions.https.onRequest(async (request, response) =>
     } else if (handleType === 'reject') {
         let message = {
             data: {
+                click_action: "FLUTTER_NOTIFICATION_CLICK",
                 notificationType: 'rejected',
             },
             notification: {
@@ -229,11 +232,11 @@ exports.replayGame = functions.https.onRequest(async(request, response) => {
                 let message = {
                     data: {
                         notificationType: 'replayGame',
-                    },
-                    notification: {
-                        title: 'replay',
-                        body: `replay current game`
                     }
+                    // notification: {
+                    //     title: 'replay',
+                    //     body: `replay current game`
+                    // }
 
                 };
                 await admin.messaging().sendToTopic(gameId, message);

@@ -32,6 +32,7 @@ class _MenuPageState extends State<MenuPage> {
       super.initState();
 
     _messaging.configure(onLaunch: (Map<String, dynamic> message) {
+      print('ON LAUNCH ----------------------------');
       print(message);
     }, onMessage: (Map<String, dynamic> message) {
 
@@ -39,8 +40,7 @@ class _MenuPageState extends State<MenuPage> {
 
       switch(notificationType){
             case 'challenge':
-                
-                _showAcceptanceDialog(message);
+                _showAcceptanceDialog(message['data']['senderId'], message['data']['senderName'], message['data']['senderFcmToken']);
                 break;
             case 'started':
                   _gameBloc.startServerGame(message['data']['player1Id'], message['data']['player2Id']);
@@ -62,6 +62,22 @@ class _MenuPageState extends State<MenuPage> {
      
     }, onResume: (Map<String, dynamic> message) {
      // _showAcceptanceDialog(message);
+      print('ON RESUME ----------------------------');
+          print(message);
+      String notificationType = message['notificationType'];
+      switch(notificationType){
+            case 'challenge':
+                _showAcceptanceDialog(message['senderId'], message['senderName'], message['senderFcmToken']);
+                break;
+            case 'started':
+                  _gameBloc.startServerGame(message['player1Id'], message['player2Id']);
+                   Navigator.of(context).push(MaterialPageRoute(builder: (context) => GameProcessPage()));
+                  break;
+            case 'gameEnd':
+                    _gameBloc.clearProcessDetails();
+                  break;
+      }
+
     });
 
     _messaging.getToken().then((token) {
@@ -73,9 +89,6 @@ class _MenuPageState extends State<MenuPage> {
 
 
   }
-
- 
-
 
   @override
   Widget build(BuildContext context) {
@@ -247,12 +260,7 @@ _showGameRejectedDialog(Map<String, dynamic> message) async{
 
   }
 
-  _showAcceptanceDialog(Map<String, dynamic> message) async{
-
-    String challengerId = message['data']['senderId'];
-    String challengerName = message['data']['senderName'];
-    String challengerFcmToken = message['data']['senderFcmToken'];
-
+  _showAcceptanceDialog(String challengerId, String challengerName, String challengerFcmToken) async{
 
      SharedPreferences prefs = await SharedPreferences.getInstance();
      String senderFcmToken = prefs.getString('fcm_token');
