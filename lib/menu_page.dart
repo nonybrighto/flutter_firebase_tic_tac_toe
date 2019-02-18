@@ -175,6 +175,7 @@ class _MenuPageState extends State<MenuPage> {
                               color: Colors.blue
                             ),), onPressed: (){
                               //TODO: implement logout action
+                              _userBloc.logoutUser();
                             },);
                       }else{
                          return Row(

@@ -104,6 +104,14 @@ class UserService {
     return loggedInUser;
   }
 
+  logoutUser() async{
+       if((await _auth.currentUser()) != null){
+          _auth.signOut();
+       }
+       _deleteUserPreferenceDetails();
+    
+  }
+
   Future<Null> _addUserToStore(User user) async {
 
     await Firestore.instance
@@ -119,6 +127,13 @@ class UserService {
     return null;
   }
 
+  _deleteUserPreferenceDetails() async{
+     SharedPreferences prefs = await SharedPreferences.getInstance();
+     prefs.remove('user_id');
+     prefs.remove('user_name');
+     prefs.remove('fcm_token');
+  }
+
   saveUserFcmTokenToPreference(String token) async{
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString('fcm_token', token);
@@ -132,6 +147,7 @@ class UserService {
   }
 
 
+
   Future<String> _getTokenFromStore() async{ 
        SharedPreferences prefs = await SharedPreferences.getInstance();
        String fcmToken = prefs.getString('fcm_token');
@@ -141,6 +157,7 @@ class UserService {
   Future<User> getCurrentUser() async {
 
          SharedPreferences prefs = await SharedPreferences.getInstance();
+         
          String   token = prefs.getString('fcm_token');
           String id = prefs.getString('user_id');
           String name = prefs.getString('user_name');
@@ -151,6 +168,8 @@ class UserService {
           return null;
 
   }
+
+  
 
   checkUserPresence(){
 

@@ -14,6 +14,7 @@ class UserBloc{
   final _usersSubject = BehaviorSubject<List<User>>(seedValue: []);
   final _getUsersSubject = BehaviorSubject<Null>(seedValue: null);
   final _changeFcmTokenSubject = BehaviorSubject<String>(seedValue: null);
+  final _logoutUser =BehaviorSubject<Null>();
 
 
   Stream<User> get currentUser => _currentUserSubject.stream;
@@ -25,6 +26,7 @@ class UserBloc{
 
   Function(User) get changeCurrentUser => (user) => _currentUserSubject.sink.add(user);
   Function(String) get changeFcmToken => (token) => _changeFcmTokenSubject.sink.add(token);
+  Function() get logoutUser => () => _logoutUser.sink.add(null);
 
   UserBloc({this.userService}){
 
@@ -79,7 +81,13 @@ class UserBloc{
           userService.saveUserFcmTokenToPreference(token);
 
 
-   });  
+   }); 
+
+   _logoutUser.stream.listen((_){
+      userService.logoutUser();
+      _currentUserSubject.sink.add(User(id: null));
+
+   }); 
 
   }
 
@@ -89,5 +97,6 @@ class UserBloc{
     _getUsersSubject.close();
     _getUsersSubject.close();
     _usersSubject.close();
+    _logoutUser.close();
   }
 }
