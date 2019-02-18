@@ -132,8 +132,11 @@ class _MenuPageState extends State<MenuPage> {
                     initialData: null,
                     stream: _userBloc.currentUser,
                     builder: (context, currentUserSnapshot){
+                      if(!currentUserSnapshot.hasData){
+                        return Container();
+                      }
                       User currentUser = currentUserSnapshot.data;
-                      return (currentUser != null)?  Text('currentUser - '+currentUser.name) : Container();
+                      return (currentUser.id != null)?  Text('currentUser - '+currentUser.name) : Container();
                     },
                   ),
                   SizedBox(
@@ -166,8 +169,7 @@ class _MenuPageState extends State<MenuPage> {
                     initialData: null,
                     stream: _userBloc.currentUser,
                     builder: (context, currentUserSnapshot){
-                      User currentUser = currentUserSnapshot.data;
-                      if (currentUser != null){ 
+                      if (currentUserSnapshot.hasData && currentUserSnapshot.data.id != null){ 
                            return FlatButton(child: Text('Logout', style:  TextStyle(
                               fontSize: 18.0,
                               color: Colors.blue
