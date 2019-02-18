@@ -71,6 +71,8 @@ class _GameBoardState extends State<GameBoard> {
                Container(
                   child: Center(child: _playBox()),
                 ),
+
+              SizedBox(height: 10.0),
               
               StreamBuilder<bool>(
                 initialData: false,
@@ -139,7 +141,7 @@ class _GameBoardState extends State<GameBoard> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 _drawBoardTile(currentBoard[0], 0),
                 _drawBoardTile(currentBoard[1], 1, border: lrBorder),
@@ -147,7 +149,7 @@ class _GameBoardState extends State<GameBoard> {
               ],
             ),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 _drawBoardTile(currentBoard[3], 3, border: tbBorder),
                 _drawBoardTile(currentBoard[4], 4, border: centreBorder),
@@ -155,7 +157,7 @@ class _GameBoardState extends State<GameBoard> {
               ],
             ),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 _drawBoardTile(currentBoard[6], 6),
                 _drawBoardTile(currentBoard[7], 7, border: lrBorder),
@@ -180,11 +182,11 @@ class _GameBoardState extends State<GameBoard> {
         pieceColor = Colors.white;
         break;
     }
-    return Expanded(
-      child: GestureDetector(
+    return  GestureDetector(
         child: Container(
           decoration: BoxDecoration(border: border),
           height: 120.0,
+          width: 120.0,
           child: Center(
               child: Text(
             gamepiece.piece,
@@ -198,8 +200,7 @@ class _GameBoardState extends State<GameBoard> {
         onTap: () {
           _gameBloc.playPiece(position, false);
         },
-      ),
-    );
+      );
   }
 
   _menuButton(String text, onPressed) {
