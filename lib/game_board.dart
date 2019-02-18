@@ -24,62 +24,66 @@ class _GameBoardState extends State<GameBoard> {
         child: Scaffold(
       body: Padding(
         padding: const EdgeInsets.fromLTRB(20.0, 40.0, 20.0, 20.0),
-        child: Column(
-          children: <Widget>[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                StreamBuilder<Player>(
-                  initialData: null,
-                  stream: _gameBloc.player1,
-                  builder: (context, player1Snapshot) {
-                    final player1 = player1Snapshot.data;
-                    return (player1 != null) ?_scoreBox(
-                        player1.user.name, player1.user.name, player1.score) : Container();
-                  },
-                ),
-                Text(
-                  'VS',
-                  style: TextStyle(fontSize: 45.0),
-                ),
-                StreamBuilder<Player>(
-                  initialData: null,
-                  stream: _gameBloc.player2,
-                  builder: (context, player2Snapshot) {
-                    final player2 = player2Snapshot.data;
-                    return (player2 != null) ? _scoreBox(
-                        player2.user.name, player2.user.name, player2.score): Container();
-                  },
-                ),
-              ],
-            ),
-            StreamBuilder<String>(
-              initialData: 'Tic Tac Toe',
-              stream: _gameBloc.gameMessage,
-              builder: (context, gameMessageSnapshot) {
-                return Text(
-                  gameMessageSnapshot.data,
-                  style: TextStyle(
-                      color: Theme.of(context).accentColor, fontSize: 20.0),
-                );
-              },
-            ),
-            Expanded(
-              child: Container(
-                child: Center(child: _playBox()),
+        child: SingleChildScrollView(
+                  child: Column(
+            children: <Widget>[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: <Widget>[
+                  StreamBuilder<Player>(
+                    initialData: null,
+                    stream: _gameBloc.player1,
+                    builder: (context, player1Snapshot) {
+                      final player1 = player1Snapshot.data;
+                      return (player1 != null) ?_scoreBox(
+                          player1.user.name, player1.user.name, player1.score) : Container();
+                    },
+                  ),
+                  Text(
+                    'VS',
+                    style: TextStyle(fontSize: 45.0),
+                  ),
+                  StreamBuilder<Player>(
+                    initialData: null,
+                    stream: _gameBloc.player2,
+                    builder: (context, player2Snapshot) {
+                      final player2 = player2Snapshot.data;
+                      return (player2 != null) ? _scoreBox(
+                          player2.user.name, player2.user.name, player2.score): Container();
+                    },
+                  ),
+                ],
               ),
-            ),
-            StreamBuilder<bool>(
-              initialData: false,
-              stream: _gameBloc.allowReplay,
-              builder: (context, allowReplaySnapshot){
+              StreamBuilder<String>(
+                initialData: 'Tic Tac Toe',
+                stream: _gameBloc.gameMessage,
+                builder: (context, gameMessageSnapshot) {
+                  return Text(
+                    gameMessageSnapshot.data,
+                    style: TextStyle(
+                        color: Theme.of(context).accentColor, fontSize: 20.0),
+                  );
+                },
+              ),
 
-                return (allowReplaySnapshot.data)?_menuButton('PLAY AGAIN', () {
-                  _gameBloc.replayCurrentGame();
-                }): Container();
-              },
-            )
-          ],
+              SizedBox(height: 40.0),
+           
+               Container(
+                  child: Center(child: _playBox()),
+                ),
+              
+              StreamBuilder<bool>(
+                initialData: false,
+                stream: _gameBloc.allowReplay,
+                builder: (context, allowReplaySnapshot){
+
+                  return (allowReplaySnapshot.data)?_menuButton('PLAY AGAIN', () {
+                    _gameBloc.replayCurrentGame();
+                  }): Container();
+                },
+              )
+            ],
+          ),
         ),
       ),
     ),
@@ -88,24 +92,6 @@ class _GameBoardState extends State<GameBoard> {
   }
 
   Future<bool> _cancelGameDialog(){
-
-    // return showDialog(
-    //   context: context,
-    //   builder: (context) => new AlertDialog(
-    //     title: new Text('Are you sure?'),
-    //     content: new Text('Do you want to exit an App'),
-    //     actions: <Widget>[
-    //       new FlatButton(
-    //         onPressed: () => Navigator.of(context).pop(false),
-    //         child: new Text('No'),
-    //       ),
-    //       new FlatButton(
-    //         onPressed: () => Navigator.of(context).pop(true),
-    //         child: new Text('Yes'),
-    //       ),
-    //     ],
-    //   ),
-    // ) ?? false;
     
     return showDialog(
       context: context,
@@ -155,25 +141,25 @@ class _GameBoardState extends State<GameBoard> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: <Widget>[
-                _tt(currentBoard[0], 0),
-                _tt(currentBoard[1], 1, border: lrBorder),
-                _tt(currentBoard[2], 2),
+                _drawBoardTile(currentBoard[0], 0),
+                _drawBoardTile(currentBoard[1], 1, border: lrBorder),
+                _drawBoardTile(currentBoard[2], 2),
               ],
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: <Widget>[
-                _tt(currentBoard[3], 3, border: tbBorder),
-                _tt(currentBoard[4], 4, border: centreBorder),
-                _tt(currentBoard[5], 5, border: tbBorder),
+                _drawBoardTile(currentBoard[3], 3, border: tbBorder),
+                _drawBoardTile(currentBoard[4], 4, border: centreBorder),
+                _drawBoardTile(currentBoard[5], 5, border: tbBorder),
               ],
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: <Widget>[
-                _tt(currentBoard[6], 6),
-                _tt(currentBoard[7], 7, border: lrBorder),
-                _tt(currentBoard[8], 8),
+                _drawBoardTile(currentBoard[6], 6),
+                _drawBoardTile(currentBoard[7], 7, border: lrBorder),
+                _drawBoardTile(currentBoard[8], 8),
               ],
             )
           ],
@@ -182,7 +168,7 @@ class _GameBoardState extends State<GameBoard> {
     );
   }
 
-  _tt(GamePiece gamepiece, position, {border}) {
+  _drawBoardTile(GamePiece gamepiece, position, {border}) {
     Color pieceColor = Colors.white;
 
     switch (gamepiece.pieceType) {
