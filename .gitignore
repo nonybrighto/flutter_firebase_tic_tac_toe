@@ -11,4 +11,5 @@ build/
 .nyc_output
 coverage/
 functions/functions/node_modules
+android/app/key.jks
 notes
