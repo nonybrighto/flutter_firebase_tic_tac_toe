@@ -360,7 +360,6 @@ class GameBloc {
 
            }else if(gameData['winner'] == 'tie'){
                   print('its a tie');
-                  //TODO: handle tie option including making it the time play again button shows up
                   _gameMessageSubject.sink.add("It's a tie !!!");
                   _allowReplaySubject.sink.add(true);
                   _gameOver = true;

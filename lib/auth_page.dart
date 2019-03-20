@@ -35,7 +35,6 @@ class _AuthPageState extends State<AuthPage> implements BlocCompleter<User> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     _authBloc = AuthBloc(new UserService(), this);
     _validator = Validator();

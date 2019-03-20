@@ -28,7 +28,6 @@ class _MenuPageState extends State<MenuPage> {
 
   @override
     void initState() {
-      // TODO: implement initState
       super.initState();
 
     _messaging.configure(onLaunch: (Map<String, dynamic> message) {
@@ -174,7 +173,6 @@ class _MenuPageState extends State<MenuPage> {
                               fontSize: 18.0,
                               color: Colors.blue
                             ),), onPressed: (){
-                              //TODO: implement logout action
                               _userBloc.logoutUser();
                             },);
                       }else{
