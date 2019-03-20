@@ -27,16 +27,7 @@ class UserService {
       case FacebookLoginStatus.loggedIn:
         FirebaseUser user = await _auth.signInWithFacebook(
             accessToken: result.accessToken.token);
-        User loggedInUser = User(
-            id: user.uid,
-            email: user.email,
-            name: user.displayName,
-            avatarUrl: user.photoUrl);
-        String fcmToken = await _getTokenFromStore();
-        loggedInUser.copyWith(fcmToken: fcmToken);
-        await _addUserToStore(loggedInUser);
-        await _saveUserToPreference(loggedInUser);
-        return loggedInUser;
+        return _processAuthUser(user);
         break;
       case FacebookLoginStatus.cancelledByUser:
         throw (AppError('Login Cancelled'));
@@ -58,80 +49,53 @@ class UserService {
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
-      User loggedInUser = User(
-          id: user.uid,
-          email: user.email,
-          name: user.displayName,
-          avatarUrl: user.photoUrl);
-        String fcmToken = await _getTokenFromStore();
-        loggedInUser.copyWith(fcmToken: fcmToken);
-      await _addUserToStore(loggedInUser);
-      await _saveUserToPreference(loggedInUser);
-      return loggedInUser;
+      return _processAuthUser(user);
     } catch (error) {
       throw (AppError('Error occured during google authentication'));
     }
   }
 
   Future<User> signUpWithEmailAndPassword(username, email, password) async {
-    //TODO: remove all uncessary stuffs
     final FirebaseUser user = await _auth.createUserWithEmailAndPassword(
         email: email, password: password);
-
-    final FirebaseUser currentUser = await _auth.currentUser();
     UserUpdateInfo updateInfo = new UserUpdateInfo();
     updateInfo.displayName = username;
-    //TODO: Make image upload possible
-    updateInfo.photoUrl = '';
-    await currentUser.updateProfile(updateInfo);
-    assert(user.uid == currentUser.uid);
+    await user.updateProfile(updateInfo);
     return signInWithEmailAndPasword(email, password);
   }
 
   Future<User> signInWithEmailAndPasword(email, password) async {
     final FirebaseUser user = await _auth.signInWithEmailAndPassword(
         email: email, password: password);
-    User loggedInUser = User(
-        id: user.uid,
-        email: user.email,
-        name: user.displayName,
-        avatarUrl: user.photoUrl);
-
-        String fcmToken = await _getTokenFromStore();
-        loggedInUser = loggedInUser.copyWith(fcmToken: fcmToken);
-    await _addUserToStore(loggedInUser);
-    await _saveUserToPreference(loggedInUser);
-    return loggedInUser;
+    return _processAuthUser(user);
   }
 
   logoutUser() async{
        if((await _auth.currentUser()) != null){
           _auth.signOut();
        }
-       _deleteUserPreferenceDetails();
-    
   }
 
-  Future<Null> _addUserToStore(User user) async {
+  Future<User> _processAuthUser(FirebaseUser authUser) async {
+
+    User loggedInUser = User(
+        id: authUser.uid,
+        email: authUser.email,
+        name: authUser.displayName,
+        avatarUrl: authUser.photoUrl);
+
+        String fcmToken = await _getTokenFromPreference();
+        loggedInUser = loggedInUser.copyWith(fcmToken: fcmToken);
+    await _addUserToFireStore(loggedInUser);
+    return loggedInUser;
+  }
+
+  Future<Null> _addUserToFireStore(User user) async {
 
     await Firestore.instance
         .collection('users')
         .document(user.id)
         .setData({'email': user.email, 'displayName': user.name, 'fcmToken': user.fcmToken, 'currentState': UserUtil().getStringFromState(UserState.available)});
-  }
-
-  Future<Null> _saveUserToPreference(User loggedInUser) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setString('user_id', loggedInUser.id);
-    await prefs.setString('user_name', loggedInUser.name);
-    return null;
-  }
-
-  _deleteUserPreferenceDetails() async{
-     SharedPreferences prefs = await SharedPreferences.getInstance();
-     prefs.remove('user_id');
-     prefs.remove('user_name');
-     prefs.remove('fcm_token');
   }
 
   saveUserFcmTokenToPreference(String token) async{
@@ -146,9 +110,7 @@ class UserService {
         .setData({'fcmToken': fcmToken}, merge: true);
   }
 
-
-
-  Future<String> _getTokenFromStore() async{ 
+  Future<String> _getTokenFromPreference() async{ 
        SharedPreferences prefs = await SharedPreferences.getInstance();
        String fcmToken = prefs.getString('fcm_token');
        return fcmToken;
@@ -156,28 +118,21 @@ class UserService {
 
   Future<User> getCurrentUser() async {
 
-         SharedPreferences prefs = await SharedPreferences.getInstance();
-         
-         String   token = prefs.getString('fcm_token');
-          String id = prefs.getString('user_id');
-          String name = prefs.getString('user_name');
-
-          if(id != null){
-            return User(id: id, name: name, fcmToken:  token );
-          }
-          return null;
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        String   token = prefs.getString('fcm_token');
+        FirebaseUser currentUser = await _auth.currentUser();
+        if(currentUser != null){
+          return User(id: currentUser.uid, name: currentUser.displayName, avatarUrl: currentUser.photoUrl , fcmToken:  token );
+        }
+        return null;
 
   }
-
   
-
   checkUserPresence(){
-
       FirebaseDatabase.instance
       .reference()
       .child('.info/connected')
       .onValue.listen((Event event) async{
-
         if(event.snapshot.value == false){
           return;
         }
