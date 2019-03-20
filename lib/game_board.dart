@@ -173,6 +173,9 @@ class _GameBoardState extends State<GameBoard> {
   _drawBoardTile(GamePiece gamepiece, position, {border}) {
     Color pieceColor = Colors.white;
 
+    double calculatedBlocSize =  MediaQuery.of(context).size.width/3 - 20;
+    double blockSize =  (calculatedBlocSize > 120) ? 120 : calculatedBlocSize;
+
     switch (gamepiece.pieceType) {
       case PieceType.win:
         pieceColor = Colors.yellow;
@@ -185,8 +188,8 @@ class _GameBoardState extends State<GameBoard> {
     return  GestureDetector(
         child: Container(
           decoration: BoxDecoration(border: border),
-          height: 120.0,
-          width: 120.0,
+          height: blockSize,
+          width: blockSize,
           child: Center(
               child: Text(
             gamepiece.piece,
