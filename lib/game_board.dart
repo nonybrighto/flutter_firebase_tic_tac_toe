@@ -13,8 +13,39 @@ class GameBoard extends StatefulWidget {
   _GameBoardState createState() => new _GameBoardState();
 }
 
-class _GameBoardState extends State<GameBoard> {
+class _GameBoardState extends State<GameBoard> with TickerProviderStateMixin {
   GameBloc _gameBloc;
+
+   AnimationController _opacityController;
+   AnimationController _boxController;
+   Animation<double> _opacity;
+   Animation<double> _boxRotate;
+   Animation<double> _boxScale;
+
+
+   @override
+  void initState() {
+    super.initState();
+     _opacityController = new AnimationController(vsync: this, duration: const Duration(milliseconds: 1000));
+     _boxController = new AnimationController(vsync: this, duration: const Duration(milliseconds: 1000));
+     _opacity = new CurvedAnimation(parent: _opacityController, curve: Curves.easeIn);
+     _boxRotate = Tween<double>(begin: 0, end: 360).animate(_boxController);
+     _boxScale = Tween<double>(begin: 0, end: 1.0).animate(_boxController);
+
+     _opacityController.addStatusListener((status){
+          if(status ==AnimationStatus.completed){
+            _boxController.forward();
+          }
+     });
+
+     _opacityController.forward();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _opacityController.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +100,21 @@ class _GameBoardState extends State<GameBoard> {
               SizedBox(height: 40.0),
            
                Container(
-                  child: Center(child: _playBox()),
+                  child: Center(child: 
+                     AnimatedBuilder(
+                       animation: _boxController,
+                       builder: (context, child){
+
+                         return  Transform.rotate(
+                        angle: _boxRotate.value * 3.14/180,
+                        child: Transform.scale(
+                          scale: _boxScale.value,
+                          child: _playBox(),
+                        ),
+                      );
+                       },
+                     )
+                  ),
                 ),
 
               SizedBox(height: 10.0),
@@ -226,21 +271,24 @@ class _GameBoardState extends State<GameBoard> {
   }
 
   _scoreBox(String avatarUrl, String username, int score) {
-    return Column(
-      children: <Widget>[
-        CircleAvatar(
-          child: Text(username.substring(0, 1)),
-        ),
-        Text(
-          username,
-          style: TextStyle(fontSize: 20.0),
-        ),
-        Text(
-          score.toString(),
-          style:
-              TextStyle(color: Theme.of(context).accentColor, fontSize: 30.0),
-        ),
-      ],
+    return FadeTransition(
+          opacity:  _opacity,
+          child: Column(
+        children: <Widget>[
+          CircleAvatar(
+            child: Text(username.substring(0, 1)),
+          ),
+          Text(
+            username,
+            style: TextStyle(fontSize: 20.0),
+          ),
+          Text(
+            score.toString(),
+            style:
+                TextStyle(color: Theme.of(context).accentColor, fontSize: 30.0),
+          ),
+        ],
+      ),
     );
   }
 }
