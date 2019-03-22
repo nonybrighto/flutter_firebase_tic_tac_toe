@@ -20,88 +20,83 @@ class MenuPage extends StatefulWidget {
   _MenuPageState createState() => _MenuPageState();
 }
 
-class _MenuPageState extends State<MenuPage> with SingleTickerProviderStateMixin {
-
-
+class _MenuPageState extends State<MenuPage>
+    with SingleTickerProviderStateMixin {
   UserBloc _userBloc;
-  GameBloc  _gameBloc;
+  GameBloc _gameBloc;
   FirebaseMessaging _messaging = new FirebaseMessaging();
 
-  AnimationController _slideController;
-  //Animation<Offset> _menuButtonSlide;
-  //Animation<double> _menuButtonSlide;
-  // AnimationController _slideController;
+  AnimationController _animationController;
+  Animation<double> _bigLetterScale;
   List<Animation<double>> _menuButtonSlides;
-  
 
   @override
-    void initState() {
-      super.initState();
+  void initState() {
+    super.initState();
 
-      // _slideController = new AnimationController(vsync: this, duration: const Duration(milliseconds: 1500));
-      // _menuButtonSlide = Tween<Offset>(begin: Offset(-0.5, 0.0), end: Offset.zero).animate(_slideController);
-      // _slideController.forward();
+    _animationController = new AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1000));
+    _bigLetterScale = Tween<double>(begin: 0.7, end: 1.0).animate(
+        CurvedAnimation(parent: _animationController, curve: Curves.easeInCirc));
 
-      _slideController = new AnimationController(vsync: this, duration: const Duration(milliseconds: 1000));
-      // _menuButtonSlide  = Tween<double>(begin: -1.0, end: 0.0).animate(CurvedAnimation(
-      //   parent: _slideController, curve: Interval(0.8, 1.0, curve: Curves.easeIn)));
+    _menuButtonSlides = [];
+    for (int i = 0; i < 4; i++) {
+      _menuButtonSlides.add(Tween<double>(begin: -1.0, end: 0.0).animate(
+          CurvedAnimation(
+              parent: _animationController,
+              curve: Interval(i / 3, 1.0, curve: Curves.easeIn))));
+    }
 
-      _menuButtonSlides = [];
-      for(int i = 0 ; i < 4; i++){
-        _menuButtonSlides.add(Tween<double>(begin: -1.0, end: 0.0).animate(CurvedAnimation(
-        parent: _slideController, curve: Interval(i/3, 1.0 , curve: Curves.easeIn))));
-      }
-     
-     
-      _slideController.forward();
+    _animationController.forward();
 
     _messaging.configure(onLaunch: (Map<String, dynamic> message) {
       print('ON LAUNCH ----------------------------');
       print(message);
     }, onMessage: (Map<String, dynamic> message) {
-
       String notificationType = message['data']['notificationType'];
 
-      switch(notificationType){
-            case 'challenge':
-                _showAcceptanceDialog(message['data']['senderId'], message['data']['senderName'], message['data']['senderFcmToken']);
-                break;
-            case 'started':
-                  _gameBloc.startServerGame(message['data']['player1Id'], message['data']['player2Id']);
-                  break;
-            case 'replayGame':
-                  _gameBloc.changeAllowReplay(false);
-                  break;
-            case 'rejected':
-                  _showGameRejectedDialog(message);
-                  break;
-            case 'gameEnd':
-                    _gameBloc.clearProcessDetails();
-                  _showGameEndDialog(message);
-                  break;
-            default:
-                print('message');
-                break;           
+      switch (notificationType) {
+        case 'challenge':
+          _showAcceptanceDialog(message['data']['senderId'],
+              message['data']['senderName'], message['data']['senderFcmToken']);
+          break;
+        case 'started':
+          _gameBloc.startServerGame(
+              message['data']['player1Id'], message['data']['player2Id']);
+          break;
+        case 'replayGame':
+          _gameBloc.changeAllowReplay(false);
+          break;
+        case 'rejected':
+          _showGameRejectedDialog(message);
+          break;
+        case 'gameEnd':
+          _gameBloc.clearProcessDetails();
+          _showGameEndDialog(message);
+          break;
+        default:
+          print('message');
+          break;
       }
-     
     }, onResume: (Map<String, dynamic> message) {
-     // _showAcceptanceDialog(message);
+      // _showAcceptanceDialog(message);
       print('ON RESUME ----------------------------');
-          print(message);
+      print(message);
       String notificationType = message['notificationType'];
-      switch(notificationType){
-            case 'challenge':
-                _showAcceptanceDialog(message['senderId'], message['senderName'], message['senderFcmToken']);
-                break;
-            case 'started':
-                  _gameBloc.startServerGame(message['player1Id'], message['player2Id']);
-                   Navigator.of(context).push(MaterialPageRoute(builder: (context) => GameProcessPage()));
-                  break;
-            case 'gameEnd':
-                    _gameBloc.clearProcessDetails();
-                  break;
+      switch (notificationType) {
+        case 'challenge':
+          _showAcceptanceDialog(message['senderId'], message['senderName'],
+              message['senderFcmToken']);
+          break;
+        case 'started':
+          _gameBloc.startServerGame(message['player1Id'], message['player2Id']);
+          Navigator.of(context)
+              .push(MaterialPageRoute(builder: (context) => GameProcessPage()));
+          break;
+        case 'gameEnd':
+          _gameBloc.clearProcessDetails();
+          break;
       }
-
     });
 
     _messaging.getToken().then((token) {
@@ -109,14 +104,10 @@ class _MenuPageState extends State<MenuPage> with SingleTickerProviderStateMixin
       print(token);
       _userBloc.changeFcmToken(token);
     });
-
-
-
   }
 
   @override
   Widget build(BuildContext context) {
-
     _userBloc = BlocProvider.of(context).userBloc;
     _gameBloc = BlocProvider.of(context).gameBloc;
     return Scaffold(
@@ -127,7 +118,7 @@ class _MenuPageState extends State<MenuPage> with SingleTickerProviderStateMixin
           Positioned(
             left: -60.0,
             top: -75.0,
-            child: _bigLetter('X'),
+            child:  _bigLetter('X'),
           ),
           Positioned(
             right: -100.0,
@@ -135,229 +126,236 @@ class _MenuPageState extends State<MenuPage> with SingleTickerProviderStateMixin
             child: _bigLetter('O'),
           ),
           SingleChildScrollView(
-                      child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: <Widget>[
-                  SizedBox(
-                    height: 40.0,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                SizedBox(
+                  height: 40.0,
+                ),
+                Text(
+                  'Tic Tac Toe',
+                  style: TextStyle(
+                    fontSize: 50.0,
+                    fontWeight: FontWeight.bold,
                   ),
-                  Text(
-                    'Tic Tac Toe',
-                    style: TextStyle(
-                      fontSize: 50.0,
-                      fontWeight: FontWeight.bold,),
-                  ),
-                  SizedBox(
-                    height: 40.0,
-                  ),
-                 
-                  StreamBuilder(
-                    initialData: null,
-                    stream: _userBloc.currentUser,
-                    builder: (context, currentUserSnapshot){
-                      if(!currentUserSnapshot.hasData){
-                        return Container();
-                      }
-                      User currentUser = currentUserSnapshot.data;
-                      return (currentUser.id != null)?  Text('currentUser - '+currentUser.name) : Container();
-                    },
-                  ),
-                  SizedBox(
-                    height: 40.0,
-                  ),
-
-                  // SlideTransition(
-                  //   position: _menuButtonSlide,
-                  //   child: _menuButton('PLAY WITH COMPUTER', (){
-                  //   _gameBloc.startSingleDeviceGame(GameType.computer);
-                  //   Navigator.of(context).push(MaterialPageRoute(builder:(index)=> GameBoard()));
-                  // }),
-                  // ),
-                  //  AnimatedBuilder(
-                  //    animation: _slideController,
-                  //     builder: (context, widget){
-                  //       return  Transform(
-                  //       transform: Matrix4.translationValues(_menuButtonSlide.value * 100.0, 0, 0),
-                  //         child: _menuButton('PLAY WITH COMPUTER', (){
-                  //       _gameBloc.startSingleDeviceGame(GameType.computer);
-                  //       Navigator.of(context).push(MaterialPageRoute(builder:(index)=> GameBoard()));
-                  //     }),
-                  // );
-                  //     },
-                  //  ),
-
-                  SlideButton(text: 'PLAY WITH COMPUTER', animation: _menuButtonSlides[0], onPressed: (){
-                       _gameBloc.startSingleDeviceGame(GameType.computer);
-                       Navigator.of(context).push(MaterialPageRoute(builder:(index)=> GameBoard()));
-                  },),
-                  
-                  SlideButton(text: 'PLAY WITH FRIEND', animation: _menuButtonSlides[1], onPressed: (){
-                         _gameBloc.startSingleDeviceGame(GameType.multi_device);
-                         Navigator.of(context).push(MaterialPageRoute(builder:(index)=> GameBoard()));
-                  },),
-                 
-                  SlideButton(text: 'PLAY WITH USERS', animation: _menuButtonSlides[2], onPressed: (){
-                        _userBloc.getUsers();
-                        Navigator.of(context).push(MaterialPageRoute(builder:(index)=> UsersBoard()));
-                  },),
-                  SlideButton(text: 'HIGH SCORE', animation: _menuButtonSlides[3], onPressed: (){
-                        _gameBloc.getHighScores();
-                        Navigator.of(context).push(MaterialPageRoute(builder:(index)=> HighScoreBoard()));
-                  },),
-                  
-                    StreamBuilder(
-                    initialData: null,
-                    stream: _userBloc.currentUser,
-                    builder: (context, currentUserSnapshot){
-                      if (currentUserSnapshot.hasData && currentUserSnapshot.data.id != null){ 
-                           return FlatButton(child: Text('Logout', style:  TextStyle(
-                              fontSize: 18.0,
-                              color: Colors.blue
-                            ),), onPressed: (){
-                              _userBloc.logoutUser();
-                            },);
-                      }else{
-                         return Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                    Text('Play with Others?', style: TextStyle(
-                      fontSize: 18.0
-                    ),),
-                        FlatButton(child: Text('Sign In', style:  TextStyle(
-                              fontSize: 18.0,
-                              color: Colors.blue
-                            ),), onPressed: (){
-                            Navigator.of(context).push(MaterialPageRoute(builder:(index)=> AuthPage(false)));
-                          },)
-                    ]);
-                          
-                      }
-                    },
-                  ),
-                  
-                ],
-              ),
+                ),
+                SizedBox(
+                  height: 40.0,
+                ),
+                StreamBuilder(
+                  initialData: null,
+                  stream: _userBloc.currentUser,
+                  builder: (context, currentUserSnapshot) {
+                    if (!currentUserSnapshot.hasData) {
+                      return Container();
+                    }
+                    User currentUser = currentUserSnapshot.data;
+                    return (currentUser.id != null)
+                        ? Text('currentUser - ' + currentUser.name)
+                        : Container();
+                  },
+                ),
+                SizedBox(
+                  height: 40.0,
+                ),
+                SlideButton(
+                  text: 'PLAY WITH COMPUTER',
+                  animation: _menuButtonSlides[0],
+                  onPressed: () {
+                    _gameBloc.startSingleDeviceGame(GameType.computer);
+                    Navigator.of(context).push(
+                        MaterialPageRoute(builder: (index) => GameBoard()));
+                  },
+                ),
+                SlideButton(
+                  text: 'PLAY WITH FRIEND',
+                  animation: _menuButtonSlides[1],
+                  onPressed: () {
+                    _gameBloc.startSingleDeviceGame(GameType.multi_device);
+                    Navigator.of(context).push(
+                        MaterialPageRoute(builder: (index) => GameBoard()));
+                  },
+                ),
+                SlideButton(
+                  text: 'PLAY WITH USERS',
+                  animation: _menuButtonSlides[2],
+                  onPressed: () {
+                    _userBloc.getUsers();
+                    Navigator.of(context).push(
+                        MaterialPageRoute(builder: (index) => UsersBoard()));
+                  },
+                ),
+                SlideButton(
+                  text: 'HIGH SCORE',
+                  animation: _menuButtonSlides[3],
+                  onPressed: () {
+                    _gameBloc.getHighScores();
+                    Navigator.of(context).push(MaterialPageRoute(
+                        builder: (index) => HighScoreBoard()));
+                  },
+                ),
+                StreamBuilder(
+                  initialData: null,
+                  stream: _userBloc.currentUser,
+                  builder: (context, currentUserSnapshot) {
+                    if (currentUserSnapshot.hasData &&
+                        currentUserSnapshot.data.id != null) {
+                      return FlatButton(
+                        child: Text(
+                          'Logout',
+                          style: TextStyle(fontSize: 18.0, color: Colors.blue),
+                        ),
+                        onPressed: () {
+                          _userBloc.logoutUser();
+                        },
+                      );
+                    } else {
+                      return Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: <Widget>[
+                            Text(
+                              'Play with Others?',
+                              style: TextStyle(fontSize: 18.0),
+                            ),
+                            FlatButton(
+                              child: Text(
+                                'Sign In',
+                                style: TextStyle(
+                                    fontSize: 18.0, color: Colors.blue),
+                              ),
+                              onPressed: () {
+                                Navigator.of(context).push(MaterialPageRoute(
+                                    builder: (index) => AuthPage(false)));
+                              },
+                            )
+                          ]);
+                    }
+                  },
+                ),
+              ],
+            ),
           ),
-        
-         
         ],
       ),
     );
   }
 
-   _showGameEndDialog(Map<String, dynamic> message) async{
-    Future.delayed(
-      Duration.zero, (){
+  _showGameEndDialog(Map<String, dynamic> message) async {
+    Future.delayed(Duration.zero, () {
+      showDialog(
+        barrierDismissible: false,
+        context: context,
+        builder: (context) => AlertDialog(
+              title: Text('Game Ended!'),
+              content: Text(message['notification']['body']), // get from server
 
-        showDialog(
-          barrierDismissible: false,
-          context: context,
-          builder: (context) => AlertDialog(
-
-            title: Text('Game Ended!'),
-            content: Text(message['notification']['body']), // get from server
-
-            actions: <Widget>[
-              FlatButton(
-                child: Text('OK'),
-                onPressed: () async{
-                      Navigator.pop(context);
-                      Navigator.of(context).push(MaterialPageRoute(builder: (context) => MenuPage()));
-                },
-              ),
-            ],
-
-          ),
-        );
-      }
-    );
-
-  }
-_showGameRejectedDialog(Map<String, dynamic> message) async{
-    Future.delayed(
-      Duration.zero, (){
-
-        showDialog(
-          barrierDismissible: false,
-          context: context,
-          builder: (context) => AlertDialog(
-
-            title: Text('Game Rejected!'),
-            content: Text(message['notification']['body']), // get from server
-
-            actions: <Widget>[
-              FlatButton(
-                child: Text('OK'),
-                onPressed: () async{
-                      Navigator.pop(context);
-                      Navigator.of(context).push(MaterialPageRoute(builder: (context) => MenuPage()));
-                },
-              ),
-            ],
-
-          ),
-        );
-      }
-    );
-
+              actions: <Widget>[
+                FlatButton(
+                  child: Text('OK'),
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    Navigator.of(context).push(
+                        MaterialPageRoute(builder: (context) => MenuPage()));
+                  },
+                ),
+              ],
+            ),
+      );
+    });
   }
 
-  _showAcceptanceDialog(String challengerId, String challengerName, String challengerFcmToken) async{
+  _showGameRejectedDialog(Map<String, dynamic> message) async {
+    Future.delayed(Duration.zero, () {
+      showDialog(
+        barrierDismissible: false,
+        context: context,
+        builder: (context) => AlertDialog(
+              title: Text('Game Rejected!'),
+              content: Text(message['notification']['body']), // get from server
 
-     SharedPreferences prefs = await SharedPreferences.getInstance();
-     String senderFcmToken = prefs.getString('fcm_token');
+              actions: <Widget>[
+                FlatButton(
+                  child: Text('OK'),
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    Navigator.of(context).push(
+                        MaterialPageRoute(builder: (context) => MenuPage()));
+                  },
+                ),
+              ],
+            ),
+      );
+    });
+  }
+
+  _showAcceptanceDialog(String challengerId, String challengerName,
+      String challengerFcmToken) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String senderFcmToken = prefs.getString('fcm_token');
     String senderId = prefs.getString('user_id');
     String senderName = prefs.getString('user_name');
 
     //TODO: remove This if not necessary .. The future dealyed
-    Future.delayed(
-      Duration.zero, (){
-
-        showDialog(
-          barrierDismissible: false,
-          context: context,
-          builder: (context) => AlertDialog(
-
-            title: Text('Tic Tac Toe Challeenge'),
-            content: Text(challengerName+' has Challenged you to a game of tic tac toe'),
-
-            actions: <Widget>[
-              FlatButton(
-                child: Text('ACCEPT'),
-                onPressed: () async{
-                      _gameBloc.handleChallenge(senderId, senderName, senderFcmToken, challengerId, challengerName, challengerFcmToken, ChallengeHandleType.accept);
-                      Navigator.pop(context);
-                      Navigator.of(context).push(MaterialPageRoute(builder: (context) => GameProcessPage()));
-                },
-              ),
-              FlatButton(
-                child: Text('DECLINE'),
-                onPressed: (){
-                       _gameBloc.handleChallenge(senderId, senderName, senderFcmToken, challengerId, challengerName, challengerFcmToken, ChallengeHandleType.reject);
-                      Navigator.pop(context);
-                },
-              )
-            ],
-
-          ),
-        );
-      }
-    );
-
+    Future.delayed(Duration.zero, () {
+      showDialog(
+        barrierDismissible: false,
+        context: context,
+        builder: (context) => AlertDialog(
+              title: Text('Tic Tac Toe Challeenge'),
+              content: Text(challengerName +
+                  ' has Challenged you to a game of tic tac toe'),
+              actions: <Widget>[
+                FlatButton(
+                  child: Text('ACCEPT'),
+                  onPressed: () async {
+                    _gameBloc.handleChallenge(
+                        senderId,
+                        senderName,
+                        senderFcmToken,
+                        challengerId,
+                        challengerName,
+                        challengerFcmToken,
+                        ChallengeHandleType.accept);
+                    Navigator.pop(context);
+                    Navigator.of(context).push(MaterialPageRoute(
+                        builder: (context) => GameProcessPage()));
+                  },
+                ),
+                FlatButton(
+                  child: Text('DECLINE'),
+                  onPressed: () {
+                    _gameBloc.handleChallenge(
+                        senderId,
+                        senderName,
+                        senderFcmToken,
+                        challengerId,
+                        challengerName,
+                        challengerFcmToken,
+                        ChallengeHandleType.reject);
+                    Navigator.pop(context);
+                  },
+                )
+              ],
+            ),
+      );
+    });
   }
 
-_bigLetter(String letter) {
-  return Text(
-    letter,
-    style: TextStyle(
-      color: Colors.black,
-      fontSize: 350.0,
-    ),
-  );
+  _bigLetter(String letter) {
+    return AnimatedBuilder(
+      animation: _animationController,
+      builder: (context, child) {
+        return Transform.scale(
+            scale: _bigLetterScale.value,
+            child: Text(
+              letter,
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 350.0,
+              ),
+            ));
+      },
+    );
+  }
 }
-}
-
-
-
-
