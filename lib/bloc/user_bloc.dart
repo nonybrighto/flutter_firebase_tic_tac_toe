@@ -16,10 +16,7 @@ class UserBloc{
   final _changeFcmTokenSubject = BehaviorSubject<String>(seedValue: null);
   final _logoutUser =BehaviorSubject<Null>();
 
-
   Stream<User> get currentUser => _currentUserSubject.stream;
-
-
   Stream<List<User>> get users => _usersSubject.stream;
 
   Function() get getUsers => () => _getUsersSubject.sink.add(null);

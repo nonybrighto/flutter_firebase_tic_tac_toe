@@ -190,7 +190,6 @@ class _MenuPageState extends State<MenuPage>
                   text: 'HIGH SCORE',
                   animation: _menuButtonSlides[3],
                   onPressed: () {
-                    _gameBloc.getHighScores();
                     Navigator.of(context).push(MaterialPageRoute(
                         builder: (index) => HighScoreBoard()));
                   },

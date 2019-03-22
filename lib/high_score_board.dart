@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_firebase_tic_tac_toe/bloc/bloc_provider.dart';
-import 'package:flutter_firebase_tic_tac_toe/bloc/game_bloc.dart';
+import 'package:flutter_firebase_tic_tac_toe/bloc/high_score_bloc.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/score_detail.dart';
 
 class HighScoreBoard extends StatefulWidget {
@@ -12,18 +11,22 @@ class HighScoreBoard extends StatefulWidget {
 
 class _HighScoreBoardState extends State<HighScoreBoard> {
 
-  GameBloc _gameBloc;
+  HighScoreBloc _highScoreBloc = HighScoreBloc();
+
+  @override
+  void initState() {
+    super.initState();
+   _highScoreBloc.fetchHighScores();
+  }
 
   @override
   Widget build(BuildContext context) {
-
-    _gameBloc = BlocProvider.of(context).gameBloc;
 
     return Scaffold(
        appBar: AppBar(title: Text('High Score'),),
        body: StreamBuilder<List<ScoreDetail>>(
          initialData: null,
-         stream: _gameBloc.highScores,
+         stream: _highScoreBloc.highScores,
          builder: (context, highScoresSnapshot){
 
            if(!highScoresSnapshot.hasData){
