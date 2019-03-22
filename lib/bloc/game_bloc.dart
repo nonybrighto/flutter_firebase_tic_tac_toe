@@ -112,6 +112,7 @@ class GameBloc {
 
     _startSingleDeviceGame.stream.listen((gameType) async{
 
+          
           if(gameType == GameType.multi_device){
 
             _gameTypeSubject.sink.add(gameType);
@@ -150,6 +151,7 @@ class GameBloc {
 
           }
 
+          _gameOver = false;
           _allowReplaySubject.sink.add(false);
           _emptyGameBoard();
     });
@@ -296,6 +298,8 @@ class GameBloc {
     });
 
     _startServerGame.stream.listen((playersId){
+
+      _gameOver = false;
 
       String player1Id = playersId['player1Id'];
       String player2Id = playersId['player2Id'];
