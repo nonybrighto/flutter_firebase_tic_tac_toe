@@ -12,6 +12,7 @@ import 'package:flutter_firebase_tic_tac_toe/models/User.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/game.dart';
 import 'package:flutter_firebase_tic_tac_toe/users_board.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_firebase_tic_tac_toe/widgets/slide_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MenuPage extends StatefulWidget {
@@ -19,16 +20,40 @@ class MenuPage extends StatefulWidget {
   _MenuPageState createState() => _MenuPageState();
 }
 
-class _MenuPageState extends State<MenuPage> {
+class _MenuPageState extends State<MenuPage> with SingleTickerProviderStateMixin {
 
 
   UserBloc _userBloc;
   GameBloc  _gameBloc;
   FirebaseMessaging _messaging = new FirebaseMessaging();
 
+  AnimationController _slideController;
+  //Animation<Offset> _menuButtonSlide;
+  //Animation<double> _menuButtonSlide;
+  // AnimationController _slideController;
+  List<Animation<double>> _menuButtonSlides;
+  
+
   @override
     void initState() {
       super.initState();
+
+      // _slideController = new AnimationController(vsync: this, duration: const Duration(milliseconds: 1500));
+      // _menuButtonSlide = Tween<Offset>(begin: Offset(-0.5, 0.0), end: Offset.zero).animate(_slideController);
+      // _slideController.forward();
+
+      _slideController = new AnimationController(vsync: this, duration: const Duration(milliseconds: 1000));
+      // _menuButtonSlide  = Tween<double>(begin: -1.0, end: 0.0).animate(CurvedAnimation(
+      //   parent: _slideController, curve: Interval(0.8, 1.0, curve: Curves.easeIn)));
+
+      _menuButtonSlides = [];
+      for(int i = 0 ; i < 4; i++){
+        _menuButtonSlides.add(Tween<double>(begin: -1.0, end: 0.0).animate(CurvedAnimation(
+        parent: _slideController, curve: Interval(i/3, 1.0 , curve: Curves.easeIn))));
+      }
+     
+     
+      _slideController.forward();
 
     _messaging.configure(onLaunch: (Map<String, dynamic> message) {
       print('ON LAUNCH ----------------------------');
@@ -142,28 +167,45 @@ class _MenuPageState extends State<MenuPage> {
                     height: 40.0,
                   ),
 
-                  _menuButton('PLAY WITH COMPUTER', (){
-                    _gameBloc.startSingleDeviceGame(GameType.computer);
-                    Navigator.of(context).push(MaterialPageRoute(builder:(index)=> GameBoard()));
-                  }),
-                   _menuButton('PLAY WITH FRIEND', 
-                    (){
-                    _gameBloc.startSingleDeviceGame(GameType.multi_device);
-                    Navigator.of(context).push(MaterialPageRoute(builder:(index)=> GameBoard()));
-                  }
-                  ),
-                  _menuButton('PLAY WITH USERS', 
-                    (){
-                    _userBloc.getUsers();
-                    Navigator.of(context).push(MaterialPageRoute(builder:(index)=> UsersBoard()));
-                  }
-                  ),
-                  _menuButton('HIGH SCORE', (){
-                    
-                    _gameBloc.getHighScores();
-                     Navigator.of(context).push(MaterialPageRoute(builder:(index)=> HighScoreBoard()));
-                  }),
+                  // SlideTransition(
+                  //   position: _menuButtonSlide,
+                  //   child: _menuButton('PLAY WITH COMPUTER', (){
+                  //   _gameBloc.startSingleDeviceGame(GameType.computer);
+                  //   Navigator.of(context).push(MaterialPageRoute(builder:(index)=> GameBoard()));
+                  // }),
+                  // ),
+                  //  AnimatedBuilder(
+                  //    animation: _slideController,
+                  //     builder: (context, widget){
+                  //       return  Transform(
+                  //       transform: Matrix4.translationValues(_menuButtonSlide.value * 100.0, 0, 0),
+                  //         child: _menuButton('PLAY WITH COMPUTER', (){
+                  //       _gameBloc.startSingleDeviceGame(GameType.computer);
+                  //       Navigator.of(context).push(MaterialPageRoute(builder:(index)=> GameBoard()));
+                  //     }),
+                  // );
+                  //     },
+                  //  ),
 
+                  SlideButton(text: 'PLAY WITH COMPUTER', animation: _menuButtonSlides[0], onPressed: (){
+                       _gameBloc.startSingleDeviceGame(GameType.computer);
+                       Navigator.of(context).push(MaterialPageRoute(builder:(index)=> GameBoard()));
+                  },),
+                  
+                  SlideButton(text: 'PLAY WITH FRIEND', animation: _menuButtonSlides[1], onPressed: (){
+                         _gameBloc.startSingleDeviceGame(GameType.multi_device);
+                         Navigator.of(context).push(MaterialPageRoute(builder:(index)=> GameBoard()));
+                  },),
+                 
+                  SlideButton(text: 'PLAY WITH USERS', animation: _menuButtonSlides[2], onPressed: (){
+                        _userBloc.getUsers();
+                        Navigator.of(context).push(MaterialPageRoute(builder:(index)=> UsersBoard()));
+                  },),
+                  SlideButton(text: 'HIGH SCORE', animation: _menuButtonSlides[3], onPressed: (){
+                        _gameBloc.getHighScores();
+                        Navigator.of(context).push(MaterialPageRoute(builder:(index)=> HighScoreBoard()));
+                  },),
+                  
                     StreamBuilder(
                     initialData: null,
                     stream: _userBloc.currentUser,
@@ -304,21 +346,6 @@ _showGameRejectedDialog(Map<String, dynamic> message) async{
     );
 
   }
-
-  _menuButton(String text, onPressed) {
-  return Padding(
-    padding: const EdgeInsets.only(bottom: 30.0),
-    child: SizedBox(
-      width: 300.0,
-      child: RaisedButton(
-          color: Color(0XFFF8D320),
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Text(text, style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),),
-          ), onPressed: onPressed),
-    ),
-  );
-}
 
 _bigLetter(String letter) {
   return Text(
