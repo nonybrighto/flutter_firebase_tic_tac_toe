@@ -6,7 +6,6 @@ import 'package:flutter_firebase_tic_tac_toe/game_process_page.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/User.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/game.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class UsersBoard extends StatefulWidget {
   UsersBoard({Key key}) : super(key: key);
@@ -26,26 +25,31 @@ class _UsersBoardState extends State<UsersBoard> {
     _userBloc = BlocProvider.of(context).userBloc;
     _gameBloc = BlocProvider.of(context).gameBloc;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Tic Tac Toe users'),
-      ),
-      body: StreamBuilder(
-        initialData: [],
-        stream: _userBloc.users,
-        builder: (context, usersSnapshot){
-          return ListView.builder(
-        itemCount: usersSnapshot.data.length,
-        itemBuilder: (context, index,){
-             return _userTile(usersSnapshot.data[index]);
-      });
-        },
-      ),
+    return StreamBuilder<User>(
+      stream: _userBloc.currentUser,
+      builder: (context, currentUserSnapshot) {
+        return Scaffold(
+          appBar: AppBar(
+            title: Text('Tic Tac Toe users'),
+          ),
+          body: StreamBuilder(
+            initialData: [],
+            stream: _userBloc.users,
+            builder: (context, usersSnapshot){
+              return ListView.builder(
+            itemCount: usersSnapshot.data.length,
+            itemBuilder: (context, index,){
+                 return _userTile(usersSnapshot.data[index], currentUserSnapshot.data);
+          });
+            },
+          ),
+        );
+      }
     );
   }
 
 
-  _userTile(User user){
+  _userTile(User user, User currentUser){
 
     return InkWell(
       highlightColor: Color(0XFFF8D320),
@@ -65,11 +69,10 @@ class _UsersBoardState extends State<UsersBoard> {
                   FlatButton(
                     child: Text('CHALLENGE'),
                     onPressed: () async{
-                        //TODONOW: put main ids here
-                         SharedPreferences prefs = await SharedPreferences.getInstance();
-                         String senderFcmToken = prefs.getString('fcm_token');
-                         String senderId = prefs.getString('user_id');
-                         String senderName = prefs.getString('user_name');
+                         String senderFcmToken = currentUser.fcmToken;
+                         String senderId = currentUser.id;
+                         String senderName = currentUser.name;
+
                          _gameBloc.handleChallenge(senderId, senderName, senderFcmToken, user.id, user.name, user.fcmToken, ChallengeHandleType.challenge);
                          Navigator.pop(context);
                          Navigator.of(context).push(MaterialPageRoute(builder: (context) => GameProcessPage()));

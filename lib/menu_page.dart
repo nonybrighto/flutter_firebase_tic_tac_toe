@@ -13,7 +13,7 @@ import 'package:flutter_firebase_tic_tac_toe/models/game.dart';
 import 'package:flutter_firebase_tic_tac_toe/users_board.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_firebase_tic_tac_toe/widgets/slide_button.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
 
 class MenuPage extends StatefulWidget {
   @override
@@ -290,17 +290,20 @@ class _MenuPageState extends State<MenuPage>
 
   _showAcceptanceDialog(String challengerId, String challengerName,
       String challengerFcmToken) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String senderFcmToken = prefs.getString('fcm_token');
-    String senderId = prefs.getString('user_id');
-    String senderName = prefs.getString('user_name');
 
-    //TODO: remove This if not necessary .. The future dealyed
     Future.delayed(Duration.zero, () {
       showDialog(
         barrierDismissible: false,
         context: context,
-        builder: (context) => AlertDialog(
+        builder: (context) => StreamBuilder<User>(
+          stream: _userBloc.currentUser,
+          builder: (context, currentUserSnapshot){
+
+            String senderId = currentUserSnapshot.data?.id;
+            String senderName = currentUserSnapshot.data?.name;
+            String senderFcmToken =currentUserSnapshot.data?.fcmToken;
+
+            return AlertDialog(
               title: Text('Tic Tac Toe Challeenge'),
               content: Text(challengerName +
                   ' has Challenged you to a game of tic tac toe'),
@@ -336,7 +339,11 @@ class _MenuPageState extends State<MenuPage>
                   },
                 )
               ],
-            ),
+            );
+          },
+
+
+        ),
       );
     });
   }
