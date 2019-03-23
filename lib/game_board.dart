@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_firebase_tic_tac_toe/bloc/game_bloc.dart';
 import 'package:flutter_firebase_tic_tac_toe/bloc/bloc_provider.dart';
+import 'package:flutter_firebase_tic_tac_toe/menu_page.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/game_piece.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/player.dart';
 
@@ -151,8 +152,7 @@ class _GameBoardState extends State<GameBoard> with TickerProviderStateMixin {
                 child: Text('YES'),
                 onPressed: () async{
                       _gameBloc.cancelGame();
-                      Navigator.of(context).pop(true);
-                     // Navigator.of(context).push(MaterialPageRoute(builder: (context) => MenuPage()));
+                     Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => MenuPage()), (route) => false);
                 },
               ),
               FlatButton(

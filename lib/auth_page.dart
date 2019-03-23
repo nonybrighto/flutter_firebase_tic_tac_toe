@@ -230,7 +230,7 @@ class _AuthPageState extends State<AuthPage> implements BlocCompleter<User> {
   @override
   completed(user) {
     _userBloc.changeCurrentUser(user);
-    Navigator.of(context).push((MaterialPageRoute(builder:(context) => MenuPage())));
+   Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MenuPage()));
   }
 
   @override
