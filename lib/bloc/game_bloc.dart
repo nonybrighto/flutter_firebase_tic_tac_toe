@@ -37,7 +37,6 @@ class GameBloc {
   final _multiNetworkStarted = BehaviorSubject<bool>(seedValue: false);
   final _cancelGameSubject = BehaviorSubject<Null>();
   final _startSingleDeviceGame = BehaviorSubject<GameType>();
-  // final _highscores  = BehaviorSubject<List<ScoreDetail>>(seedValue:  []);
  
   final _clearProcessDetails = BehaviorSubject<Null>();
   final _startServerGame = BehaviorSubject<Map<String, String>>();
@@ -80,6 +79,8 @@ class GameBloc {
  
 
   GameBloc({this.gameService, this.userService}) {
+
+
     _handleChallengeSubject.stream.listen((challengeDetails) {
       String senderId = challengeDetails['senderId'];
       String senderName = challengeDetails['senderName'];
@@ -96,6 +97,12 @@ class GameBloc {
     _currentBoardC = List.generate(
         9, (index) => GamePiece(piece: '', pieceType: PieceType.normal));
   
+
+    _allowReplaySubject.stream.listen((allowReplay){
+          if(allowReplay){
+            _gameOver = false;
+          }
+    });
 
     final playDetails = Observable.combineLatest4(
         _player1Subject,
@@ -291,10 +298,8 @@ class GameBloc {
         if(gameType == GameType.computer && currentPlayer.user.name == 'Computer'){
               _playComputerPiece();
         }
-
+        _gameMessageSubject.sink.add(currentPlayer.user.name + "'s turn");
       }
-      _gameMessageSubject.sink.add(currentPlayer.user.name + "'s turn");
-      _gameOver = false;
     });
 
     _startServerGame.stream.listen((playersId){
@@ -324,7 +329,6 @@ class GameBloc {
               List<int> winLine = _getWinLine(_currentBoardC, gameWinner.gamePiece.piece);
               _markWinLineOnBoard(winLine);
               _currentBoardSubject.sink.add(_currentBoardC);
-              _changePlayerTurn(false, idToUse: gameData['currentPlayer']);
               _gameMessageSubject.sink.add(gameWinner.user.name + ' wins!!!');
               _allowReplaySubject.sink.add(true);
               _gameOver = true;
