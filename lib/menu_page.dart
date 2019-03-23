@@ -151,7 +151,7 @@ class _MenuPageState extends State<MenuPage>
                       return Container();
                     }
                     User currentUser = currentUserSnapshot.data;
-                    return (currentUser.id != null)
+                    return (currentUser != null)
                         ? Text('currentUser - ' + currentUser.name)
                         : Container();
                   },
@@ -199,7 +199,7 @@ class _MenuPageState extends State<MenuPage>
                   stream: _userBloc.currentUser,
                   builder: (context, currentUserSnapshot) {
                     if (currentUserSnapshot.hasData &&
-                        currentUserSnapshot.data.id != null) {
+                        currentUserSnapshot.data != null) {
                       return FlatButton(
                         child: Text(
                           'Logout',

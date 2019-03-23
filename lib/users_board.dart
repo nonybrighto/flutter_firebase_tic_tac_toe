@@ -60,6 +60,7 @@ class _UsersBoardState extends State<UsersBoard> {
       trailing: _userStateDisplay(user.currentState),  
       ),
       onTap: (){
+        //TODO: prevent alert from showing when currentuser is not set
         showDialog(
           context: context,
           builder: (context) => AlertDialog(

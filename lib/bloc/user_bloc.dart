@@ -10,10 +10,10 @@ class UserBloc{
 
   final UserService userService;
 
-  final _currentUserSubject = BehaviorSubject<User>(seedValue: User(id: null));
-  final _usersSubject = BehaviorSubject<List<User>>(seedValue: []);
-  final _getUsersSubject = BehaviorSubject<Null>(seedValue: null);
-  final _changeFcmTokenSubject = BehaviorSubject<String>(seedValue: null);
+  final _currentUserSubject = BehaviorSubject<User>();
+  final _usersSubject = BehaviorSubject<List<User>>();
+  final _getUsersSubject = BehaviorSubject<Null>();
+  final _changeFcmTokenSubject = BehaviorSubject<String>();
   final _logoutUser =BehaviorSubject<Null>();
 
   Stream<User> get currentUser => _currentUserSubject.stream;
@@ -36,13 +36,10 @@ class UserBloc{
         }
     });
 
-   
-
-
-   _getUsersSubject.stream.withLatestFrom(_currentUserSubject, (_ , User currentUser){
-      return currentUser;
-   }).listen((currentUser){
+   _getUsersSubject.stream.listen((_) async{
           
+         User currentUser = await userService.getCurrentUser();
+
           Firestore.instance.collection('users').snapshots().listen((data){
 
                List<User> users = data.documents.map<User>((userSnapshot) => User(
@@ -53,7 +50,7 @@ class UserBloc{
                  fcmToken: userSnapshot['fcmToken'],
                  currentState: UserUtil().getStateFromString(userSnapshot['currentState'])
                )).toList();
-               if(currentUser.id != null){
+               if(currentUser != null){
                  users = users.where((user) => user.id != currentUser.id).toList();
                } 
                _usersSubject.sink.add(users);
@@ -61,33 +58,26 @@ class UserBloc{
 
    });
 
-   _changeFcmTokenSubject.withLatestFrom(_currentUserSubject, (token, currentUser){
+   _changeFcmTokenSubject.listen((token) async{
+        
+          User currentUser = await userService.getCurrentUser();
 
-      return {'token': token, 'currentUser': currentUser};
-   }).listen((details){
-
-          String token = details['token'];
-          User currentUser = details['currentUser'];
-
-          if(currentUser.id != null){
+          if(currentUser != null){
             currentUser = currentUser.copyWith(fcmToken: token);
             _currentUserSubject.sink.add(currentUser);
             userService.addUserTokenToStore(currentUser.id, token);
           }
 
           userService.saveUserFcmTokenToPreference(token);
-
-
    }); 
 
-   _logoutUser.stream.listen((_){
+  _logoutUser.stream.listen((_){
       userService.logoutUser();
-      _currentUserSubject.sink.add(User(id: null));
+      _currentUserSubject.sink.add(null);
 
-   }); 
+  }); 
 
   }
-
 
   close(){
     _currentUserSubject.close();
