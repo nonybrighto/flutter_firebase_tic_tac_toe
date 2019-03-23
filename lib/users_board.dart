@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_firebase_tic_tac_toe/auth_page.dart';
 import 'package:flutter_firebase_tic_tac_toe/bloc/bloc_provider.dart';
 import 'package:flutter_firebase_tic_tac_toe/bloc/game_bloc.dart';
 import 'package:flutter_firebase_tic_tac_toe/bloc/user_bloc.dart';
@@ -70,13 +71,18 @@ class _UsersBoardState extends State<UsersBoard> {
                   FlatButton(
                     child: Text('CHALLENGE'),
                     onPressed: () async{
-                         String senderFcmToken = currentUser.fcmToken;
-                         String senderId = currentUser.id;
-                         String senderName = currentUser.name;
+                        if(currentUser != null){
+                          String senderFcmToken = currentUser.fcmToken;
+                          String senderId = currentUser.id;
+                          String senderName = currentUser.name;
 
-                         _gameBloc.handleChallenge(senderId, senderName, senderFcmToken, user.id, user.name, user.fcmToken, ChallengeHandleType.challenge);
-                         Navigator.pop(context);
-                         Navigator.of(context).push(MaterialPageRoute(builder: (context) => GameProcessPage()));
+                          _gameBloc.handleChallenge(senderId, senderName, senderFcmToken, user.id, user.name, user.fcmToken, ChallengeHandleType.challenge);
+                          Navigator.pop(context);
+                          Navigator.of(context).push(MaterialPageRoute(builder: (context) => GameProcessPage()));
+                        }else{
+                             Navigator.of(context).push(MaterialPageRoute(
+                                    builder: (index) => AuthPage(false)));
+                        }
                     },
                   ),
                   FlatButton(
