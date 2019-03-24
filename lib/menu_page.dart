@@ -57,7 +57,7 @@ class _MenuPageState extends State<MenuPage>
 
       switch (notificationType) {
         case 'challenge':
-         User challenger = User(id: message['data']['senderId'], name:  message['data']['senderName'],  fcmToken: message['data']['senderName']);
+         User challenger = User(id: message['data']['senderId'], name:  message['data']['senderName'],  fcmToken: message['data']['senderFcmToken']);
           _showAcceptanceDialog(challenger);
           break;
         case 'started':
