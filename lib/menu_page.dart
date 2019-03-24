@@ -57,15 +57,15 @@ class _MenuPageState extends State<MenuPage>
 
       switch (notificationType) {
         case 'challenge':
-          _showAcceptanceDialog(message['data']['senderId'],
-              message['data']['senderName'], message['data']['senderFcmToken']);
+         User challenger = User(id: message['data']['senderId'], name:  message['data']['senderName'],  fcmToken: message['data']['senderName']);
+          _showAcceptanceDialog(challenger);
           break;
         case 'started':
           _gameBloc.startServerGame(
               message['data']['player1Id'], message['data']['player2Id']);
           break;
         case 'replayGame':
-          _gameBloc.changeAllowReplay(false);
+          _gameBloc.changeGameOver(false);
           break;
         case 'rejected':
           _showGameRejectedDialog(message);
@@ -85,8 +85,8 @@ class _MenuPageState extends State<MenuPage>
       String notificationType = message['notificationType'];
       switch (notificationType) {
         case 'challenge':
-          _showAcceptanceDialog(message['senderId'], message['senderName'],
-              message['senderFcmToken']);
+          User challenger = User(id: message['senderId'], name:  message['senderName'],  fcmToken:  message['senderFcmToken']);
+          _showAcceptanceDialog(challenger);
           break;
         case 'started':
           _gameBloc.startServerGame(message['player1Id'], message['player2Id']);
@@ -288,8 +288,7 @@ class _MenuPageState extends State<MenuPage>
     });
   }
 
-  _showAcceptanceDialog(String challengerId, String challengerName,
-      String challengerFcmToken) async {
+  _showAcceptanceDialog(User challenger) async {
 
     Future.delayed(Duration.zero, () {
       showDialog(
@@ -299,25 +298,16 @@ class _MenuPageState extends State<MenuPage>
           stream: _userBloc.currentUser,
           builder: (context, currentUserSnapshot){
 
-            String senderId = currentUserSnapshot.data?.id;
-            String senderName = currentUserSnapshot.data?.name;
-            String senderFcmToken =currentUserSnapshot.data?.fcmToken;
-
             return AlertDialog(
               title: Text('Tic Tac Toe Challeenge'),
-              content: Text(challengerName +
+              content: Text(challenger.name +
                   ' has Challenged you to a game of tic tac toe'),
               actions: <Widget>[
                 FlatButton(
                   child: Text('ACCEPT'),
                   onPressed: () async {
                     _gameBloc.handleChallenge(
-                        senderId,
-                        senderName,
-                        senderFcmToken,
-                        challengerId,
-                        challengerName,
-                        challengerFcmToken,
+                        challenger,
                         ChallengeHandleType.accept);
                     Navigator.pop(context);
                     Navigator.of(context).push(MaterialPageRoute(
@@ -328,12 +318,7 @@ class _MenuPageState extends State<MenuPage>
                   child: Text('DECLINE'),
                   onPressed: () {
                     _gameBloc.handleChallenge(
-                        senderId,
-                        senderName,
-                        senderFcmToken,
-                        challengerId,
-                        challengerName,
-                        challengerFcmToken,
+                       challenger,
                         ChallengeHandleType.reject);
                     Navigator.pop(context);
                   },

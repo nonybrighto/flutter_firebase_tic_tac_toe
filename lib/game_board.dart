@@ -122,7 +122,7 @@ class _GameBoardState extends State<GameBoard> with TickerProviderStateMixin {
               
               StreamBuilder<bool>(
                 initialData: false,
-                stream: _gameBloc.allowReplay,
+                stream: _gameBloc.gameOver,
                 builder: (context, allowReplaySnapshot){
 
                   return (allowReplaySnapshot.data)?_menuButton('PLAY AGAIN', () {

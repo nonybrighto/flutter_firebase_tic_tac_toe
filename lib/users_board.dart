@@ -61,7 +61,6 @@ class _UsersBoardState extends State<UsersBoard> {
       trailing: _userStateDisplay(user.currentState),  
       ),
       onTap: (){
-        //TODO: prevent alert from showing when currentuser is not set
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
@@ -72,11 +71,7 @@ class _UsersBoardState extends State<UsersBoard> {
                     child: Text('CHALLENGE'),
                     onPressed: () async{
                         if(currentUser != null){
-                          String senderFcmToken = currentUser.fcmToken;
-                          String senderId = currentUser.id;
-                          String senderName = currentUser.name;
-
-                          _gameBloc.handleChallenge(senderId, senderName, senderFcmToken, user.id, user.name, user.fcmToken, ChallengeHandleType.challenge);
+                          _gameBloc.handleChallenge(user, ChallengeHandleType.challenge);
                           Navigator.pop(context);
                           Navigator.of(context).push(MaterialPageRoute(builder: (context) => GameProcessPage()));
                         }else{

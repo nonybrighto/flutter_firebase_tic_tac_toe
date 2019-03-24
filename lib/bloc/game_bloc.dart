@@ -18,23 +18,24 @@ class GameBloc {
 
   List<GamePiece> _currentBoardC = [];
   bool _gameOver = false;
+  GameType _gameType = GameType.computer;
+
   final _currentBoardSubject = BehaviorSubject<List<GamePiece>>(
       seedValue: List.generate(
           9, (index) => GamePiece(piece: '', pieceType: PieceType.normal)));
 
   final _currentPlayerSubject = BehaviorSubject<Player>(seedValue: Player());
-  final _player1Subject = BehaviorSubject<Player>(seedValue: null);
-  final _player2Subject = BehaviorSubject<Player>(seedValue: null);
+  final _player1Subject = BehaviorSubject<Player>();
+  final _player2Subject = BehaviorSubject<Player>();
   final _gameMessageSubject =
       BehaviorSubject<String>(seedValue: 'Tic - Tac - Toe');
-  final _replayCurrentGameSubject = BehaviorSubject<Null>(seedValue: null);
+  final _replayCurrentGameSubject = BehaviorSubject<Null>();
   final _handleChallengeSubject = BehaviorSubject<Map>();
-  final _allowReplaySubject = BehaviorSubject<bool>(seedValue: false);
-  final _playPiece = BehaviorSubject<Map<String, dynamic>>(seedValue: null);
-  final _gameTypeSubject = BehaviorSubject<GameType>(seedValue: GameType.computer);
+  final _gameOverSubject = BehaviorSubject<bool>();
+  final _playPiece = BehaviorSubject<Map<String, dynamic>>();
   final _multiNetworkMessage =
       BehaviorSubject<String>(seedValue: 'Tic Tac Toe ...');
-  final _multiNetworkStarted = BehaviorSubject<bool>(seedValue: false);
+  final _multiNetworkStarted = BehaviorSubject<bool>();
   final _cancelGameSubject = BehaviorSubject<Null>();
   final _startSingleDeviceGame = BehaviorSubject<GameType>();
  
@@ -46,25 +47,17 @@ class GameBloc {
   Function() get cancelGame => () => _cancelGameSubject.sink.add(null);
   Function() get replayCurrentGame =>
       () => _replayCurrentGameSubject.sink.add(null);
-  Function(String, String, String, String, String, String, ChallengeHandleType)
-      get handleChallenge => (senderId, senderName, senderFcmToken, receiverId,
-              receiverName, receiverFcmToken, challengeHandleType) =>
+  Function(User, ChallengeHandleType)
+      get handleChallenge => (receiver , challengeHandleType) =>
           _handleChallengeSubject.sink.add({
-            'senderId': senderId,
-            'senderName': senderName,
-            'senderFcmToken': senderFcmToken,
-            'receiverId': receiverId,
-            'receiverName': receiverName,
-            'receiverFcmToken': receiverFcmToken,
+            'receiver':receiver,
             'challengeHandleType': challengeHandleType
           });
 
-  Function(GameType) get gameType =>
-      (gameType) => _gameTypeSubject.sink.add(gameType);
   Function(GameType) get startSingleDeviceGame => (gameType) => _startSingleDeviceGame.sink.add(gameType);
   Function() get clearProcessDetails => () => _clearProcessDetails.sink.add(null);
   Function(String, String) get startServerGame => (player1Id, player2Id) => _startServerGame.sink.add({'player1Id': player1Id, 'player2Id': player2Id});
-  Function(bool) get changeAllowReplay => (allowReplay) => _allowReplaySubject.sink.add(allowReplay);
+  Function(bool) get changeGameOver => (allowReplay) => _gameOverSubject.sink.add(allowReplay);
 
   //stream
   Stream<List<GamePiece>> get currentBoard => _currentBoardSubject.stream;
@@ -74,57 +67,47 @@ class GameBloc {
   Stream<String> get gameMessage => _gameMessageSubject.stream;
   Stream<String> get multiNetworkMessage => _multiNetworkMessage.stream;
   Stream<bool> get multiNetworkStarted => _multiNetworkStarted.stream;
-  Stream<bool> get allowReplay => _allowReplaySubject.stream;
+  Stream<bool> get gameOver => _gameOverSubject.stream;
   
  
 
   GameBloc({this.gameService, this.userService}) {
 
 
-    _handleChallengeSubject.stream.listen((challengeDetails) {
-      String senderId = challengeDetails['senderId'];
-      String senderName = challengeDetails['senderName'];
-      String senderFcmToken = challengeDetails['senderFcmToken'];
-      String receiverId = challengeDetails['receiverId'];
-      String receiverName = challengeDetails['receiverName'];
-      String receiverFcmToken = challengeDetails['receiverFcmToken'];
-      ChallengeHandleType handleType = challengeDetails['challengeHandleType'];
+    _handleChallengeSubject.stream.listen((challengeDetails) async{
+      
+        User sender = await userService.getCurrentUser();
+        User receiver = challengeDetails['receiver'];  
+        ChallengeHandleType handleType = challengeDetails['challengeHandleType'];
 
-      gameService.handleChallenge(senderId, senderName, senderFcmToken,
-          receiverId, receiverName, receiverFcmToken, handleType);
+      gameService.handleChallenge(sender, receiver, handleType);
     });
 
     _currentBoardC = List.generate(
         9, (index) => GamePiece(piece: '', pieceType: PieceType.normal));
   
 
-    _allowReplaySubject.stream.listen((allowReplay){
-          if(allowReplay){
-            _gameOver = false;
-          }
+    _gameOverSubject.stream.listen((gameOver){
+            _gameOver = gameOver;
     });
 
-    final playDetails = Observable.combineLatest4(
+    final playDetails = Observable.combineLatest3(
         _player1Subject,
         _player2Subject,
-        _gameTypeSubject,
-        _currentPlayerSubject, (player1, player2, gameType, currentPlayer) {
+        _currentPlayerSubject, (player1, player2, currentPlayer) {
       return {
         'player1': player1,
         'player2': player2,
-        'gameType': gameType,
         'currentPlayer': currentPlayer
       };
     });
 
     _startSingleDeviceGame.stream.listen((gameType) async{
 
+          _gameType = gameType;
           
           if(gameType == GameType.multi_device){
 
-            _gameTypeSubject.sink.add(gameType);
-            
-             
               _player1Subject.sink.add(Player(
                   user:  User(id: 'Player1', name: 'Player1', avatarUrl: 'peter'),
                   gamePiece: GamePiece(piece: 'X', pieceType: PieceType.normal),
@@ -138,10 +121,7 @@ class GameBloc {
               _currentPlayerSubject.sink.add(currentPlayer);
               _gameMessageSubject.sink.add(currentPlayer.user.name + "'s turn");
 
-
           }else if(gameType == GameType.computer){
-
-            _gameTypeSubject.sink.add(gameType);
 
              _player1Subject.sink.add(Player(
                   user:  User(id: 'User', name: 'User', avatarUrl: 'user'),
@@ -158,8 +138,8 @@ class GameBloc {
 
           }
 
-          _gameOver = false;
-          _allowReplaySubject.sink.add(false);
+          //_gameOver = false;
+          _gameOverSubject.sink.add(false);
           _emptyGameBoard();
     });
 
@@ -171,14 +151,13 @@ class GameBloc {
       Player player2 = details['player2'];
       int position = details['position'];
       Player currentPlayer = details['currentPlayer'];
-      GameType gameType = details['gameType'];
       bool isAuto = details['isAuto'];
       User currentUser  = await userService.getCurrentUser();
 
 
 
       if (_currentBoardC[position].piece.isEmpty && !_gameOver) {
-        if (gameType == GameType.multi_network) {
+        if (_gameType == GameType.multi_network) {
 
           if(currentPlayer.user.id == currentUser.id){
 
@@ -199,7 +178,7 @@ class GameBloc {
           
         } else {
 
-          if(gameType == GameType.multi_device || isAuto || (currentPlayer.user.id == 'User')){
+          if(_gameType == GameType.multi_device || isAuto || (currentPlayer.user.id == 'User')){
 
             _currentBoardC[position] = currentPlayer.gamePiece;
           final List<int> winLine = _getWinLine(_currentBoardC, currentPlayer.gamePiece.piece);
@@ -222,16 +201,17 @@ class GameBloc {
                       player2.gamePiece.copyWith(pieceType: PieceType.normal));
               _player2Subject.sink.add(player2);
             }
-            _allowReplaySubject.sink.add(true);
-            _gameOver = true;
+            _gameOverSubject.sink.add(true);
+           // _gameOver = true;
           } else if (_isTie(_currentBoardC)) {
             _gameMessageSubject.sink.add("It's a tie !!!");
-            _allowReplaySubject.sink.add(true);
-            _gameOver = true;
+            _gameOverSubject.sink.add(true);
+          //  _gameOver = true;
           } else {
             //change turn
             _changePlayerTurn(false);
-            if(gameType == GameType.computer && currentPlayer.user.name == 'User'){
+            //if the last player is a user, then computer can play own piece
+            if(_gameType == GameType.computer && currentPlayer.user.name == 'User'){
                
                _playComputerPiece();
             }
@@ -242,11 +222,9 @@ class GameBloc {
       }
     });
 
-    _cancelGameSubject.withLatestFrom(_gameTypeSubject, (_, GameType gameType){
-        return gameType;
-    }).listen((GameType gameType) async{
+    _cancelGameSubject.listen((_) async{
 
-          if(gameType == GameType.multi_network){
+          if(_gameType == GameType.multi_network){
              List<Player> players = await _getPlayers();
 
             String gameId = players[0].user.id+'_'+players[1].user.id;
@@ -262,22 +240,12 @@ class GameBloc {
           }
     });
 
-    _replayCurrentGameSubject.withLatestFrom(Observable.combineLatest2(_currentPlayerSubject, _gameTypeSubject, (currentPlayer, gameType){
+    _replayCurrentGameSubject.withLatestFrom(_currentPlayerSubject, (_, Player currentPlayer){
 
-        return {
-          'currentPlayer': currentPlayer,
-          'gameType': gameType
-        };
+          return currentPlayer;
+    }).listen((currentPlayer) async{
 
-    }),
-        (_, details) {
-      return details;
-    }).listen((details) async{
-
-      Player currentPlayer = details['currentPlayer'];
-      GameType gameType = details['gameType'];
-
-      if(gameType == GameType.multi_network){
+      if(_gameType == GameType.multi_network){
 
         //get players
        List<Player> players = await _getPlayers();
@@ -294,8 +262,8 @@ class GameBloc {
 
       }else{
         _emptyGameBoard();
-        _allowReplaySubject.sink.add(false);
-        if(gameType == GameType.computer && currentPlayer.user.name == 'Computer'){
+        _gameOverSubject.sink.add(false);
+        if(_gameType == GameType.computer && currentPlayer.user.name == 'Computer'){
               _playComputerPiece();
         }
         _gameMessageSubject.sink.add(currentPlayer.user.name + "'s turn");
@@ -304,7 +272,8 @@ class GameBloc {
 
     _startServerGame.stream.listen((playersId){
 
-      _gameOver = false;
+      _gameOverSubject.sink.add(false);
+      _gameType = GameType.multi_network;
 
       String player1Id = playersId['player1Id'];
       String player2Id = playersId['player2Id'];
@@ -314,9 +283,7 @@ class GameBloc {
         _serverGameSub = Firestore.instance
         .collection('games').document(gameId)
         .snapshots().listen((snapshot) async{
-            print(snapshot);
-            print('snapshot');
-
+          
             Map<String, dynamic> gameData = snapshot.data;
 
             _drawNetworkPlayer(gameData['player1'], _player1Subject);
@@ -330,23 +297,20 @@ class GameBloc {
               _markWinLineOnBoard(winLine);
               _currentBoardSubject.sink.add(_currentBoardC);
               _gameMessageSubject.sink.add(gameWinner.user.name + ' wins!!!');
-              _allowReplaySubject.sink.add(true);
-              _gameOver = true;
+              _gameOverSubject.sink.add(true);
+             // _gameOver = true;
 
            }else if(gameData['winner'] == 'tie'){
                   print('its a tie');
                   _gameMessageSubject.sink.add("It's a tie !!!");
-                  _allowReplaySubject.sink.add(true);
-                  _gameOver = true;
+                  _gameOverSubject.sink.add(true);
+               //   _gameOver = true;
            }else{
             _changePlayerTurn(false, idToUse: gameData['currentPlayer']);
            }
     })..onError((error){
         print(error);
     });
-
-    //get the game from the server and listen for it here
-    _gameTypeSubject.sink.add(GameType.multi_network);
 
     _multiNetworkMessage.sink
         .add('Game has been Started! Click button to play');
@@ -545,10 +509,9 @@ class GameBloc {
     _player2Subject.close();
     _replayCurrentGameSubject.close();
     _handleChallengeSubject.close();
-    _gameTypeSubject.close();
     _multiNetworkMessage.close();
     _multiNetworkStarted.close();
-    _allowReplaySubject.close();
+    _gameOverSubject.close();
     _startSingleDeviceGame.close();
     _clearProcessDetails.close();
     _startServerGame.close();
