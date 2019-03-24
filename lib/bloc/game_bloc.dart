@@ -30,7 +30,7 @@ class GameBloc {
   final _replayCurrentGameSubject = BehaviorSubject<Null>();
   final _handleChallengeSubject = BehaviorSubject<Map>();
   final _gameOverSubject = BehaviorSubject<bool>();
-  final _playPiece = BehaviorSubject<Map<String, dynamic>>();
+  final _playPiece = BehaviorSubject<int>();
   final _multiNetworkMessage =
       BehaviorSubject<String>(seedValue: 'Tic Tac Toe ...');
   final _multiNetworkStarted = BehaviorSubject<bool>();
@@ -41,7 +41,7 @@ class GameBloc {
   final _startServerGame = BehaviorSubject<Map<String, String>>();
 
   //sink
-  Function(int, bool) get playPiece => (position, isAuto) => _playPiece.sink.add({'position':position, 'isAuto': isAuto});
+  Function(int) get playPiece => (position) => _playPiece.sink.add(position);
   Function() get cancelGame => () => _cancelGameSubject.sink.add(null);
   Function() get replayCurrentGame =>
       () => _replayCurrentGameSubject.sink.add(null);
@@ -139,14 +139,13 @@ class GameBloc {
     });
 
     _playPiece.withLatestFrom(playDetails,
-        (Map<String, dynamic> pieceDetails, Map<String, dynamic> playDetails) {
-      return {}..addAll(playDetails)..addAll(pieceDetails);
+        (int position,  Map<String, dynamic> playDetails) {
+      return {}..addAll(playDetails)..addAll({'position':position});
     }).listen((details) async{
       Player player1 = details['player1'];
       Player player2 = details['player2'];
       int position = details['position'];
       Player currentPlayer = details['currentPlayer'];
-      bool isAuto = details['isAuto'];
       User currentUser  = await userService.getCurrentUser();
 
 
@@ -173,9 +172,7 @@ class GameBloc {
           
         } else {
 
-          if(_gameType == GameType.multi_device || isAuto || (currentPlayer.user.id == 'User')){
-
-            _currentBoardC[position] = currentPlayer.gamePiece;
+          _currentBoardC[position] = currentPlayer.gamePiece;
           final List<int> winLine = _getWinLine(_currentBoardC, currentPlayer.gamePiece.piece);
           if (winLine.isNotEmpty) {
            
@@ -213,7 +210,7 @@ class GameBloc {
             }
           }
           _currentBoardSubject.sink.add(_currentBoardC);
-        }
+        
           }
       }
     });
@@ -327,7 +324,7 @@ class GameBloc {
      Future.delayed(Duration(seconds: 1), ()async{
                           int bestPostion = await _getComputerPlayPosition();
                           //playPiece(bestPostion, true);
-                          _playPiece.sink.add({'position': bestPostion , 'isAuto': true});
+                          _playPiece.sink.add(bestPostion);
 
      });
   }
