@@ -20,15 +20,13 @@ class GameBloc {
   bool _gameOver = false;
   GameType _gameType = GameType.computer;
 
-  final _currentBoardSubject = BehaviorSubject<List<GamePiece>>(
-      seedValue: List.generate(
-          9, (index) => GamePiece(piece: '', pieceType: PieceType.normal)));
+  final _currentBoardSubject = BehaviorSubject<List<GamePiece>>();
 
   final _currentPlayerSubject = BehaviorSubject<Player>(seedValue: Player());
   final _player1Subject = BehaviorSubject<Player>();
   final _player2Subject = BehaviorSubject<Player>();
   final _gameMessageSubject =
-      BehaviorSubject<String>(seedValue: 'Tic - Tac - Toe');
+      BehaviorSubject<String>(seedValue: '');
   final _replayCurrentGameSubject = BehaviorSubject<Null>();
   final _handleChallengeSubject = BehaviorSubject<Map>();
   final _gameOverSubject = BehaviorSubject<bool>();
@@ -73,6 +71,7 @@ class GameBloc {
 
   GameBloc({this.gameService, this.userService}) {
 
+    _emptyGameBoard();
 
     _handleChallengeSubject.stream.listen((challengeDetails) async{
       
@@ -83,9 +82,6 @@ class GameBloc {
       gameService.handleChallenge(sender, receiver, handleType);
     });
 
-    _currentBoardC = List.generate(
-        9, (index) => GamePiece(piece: '', pieceType: PieceType.normal));
-  
 
     _gameOverSubject.stream.listen((gameOver){
             _gameOver = gameOver;
@@ -138,7 +134,6 @@ class GameBloc {
 
           }
 
-          //_gameOver = false;
           _gameOverSubject.sink.add(false);
           _emptyGameBoard();
     });
@@ -202,12 +197,13 @@ class GameBloc {
               _player2Subject.sink.add(player2);
             }
             _gameOverSubject.sink.add(true);
-           // _gameOver = true;
+
           } else if (_isTie(_currentBoardC)) {
             _gameMessageSubject.sink.add("It's a tie !!!");
             _gameOverSubject.sink.add(true);
-          //  _gameOver = true;
+
           } else {
+
             //change turn
             _changePlayerTurn(false);
             //if the last player is a user, then computer can play own piece
@@ -298,13 +294,11 @@ class GameBloc {
               _currentBoardSubject.sink.add(_currentBoardC);
               _gameMessageSubject.sink.add(gameWinner.user.name + ' wins!!!');
               _gameOverSubject.sink.add(true);
-             // _gameOver = true;
 
            }else if(gameData['winner'] == 'tie'){
                   print('its a tie');
                   _gameMessageSubject.sink.add("It's a tie !!!");
                   _gameOverSubject.sink.add(true);
-               //   _gameOver = true;
            }else{
             _changePlayerTurn(false, idToUse: gameData['currentPlayer']);
            }
@@ -411,9 +405,6 @@ class GameBloc {
         }
          _currentPlayerSubject.sink.add(currentSetPlayer);
          _gameMessageSubject.sink.add(currentSetPlayer.user.name + "'s turn"+tempString);
-
-
-
     });
 
 
@@ -430,10 +421,7 @@ class GameBloc {
   }
 
   Future<Player> _getPlayerFromId(String playerId) async{
-
-
     List<Player> players = await _getPlayers();
-
     return players.firstWhere((player) => player.user.id == playerId);
   }
 
@@ -469,13 +457,13 @@ class GameBloc {
       return defencePosition;
     }else{
         //play on any random empty position
-        List<int> emptyPos = _emptyPositionOnBoard();
+        List<int> emptyPos = _emptyBoardPositions();
         int randPos = Random().nextInt(emptyPos.length);
         return emptyPos[randPos];
     }
   }
 
-  _emptyPositionOnBoard(){
+  _emptyBoardPositions(){
     List<int> emptyPos = [];
     for(int i = 0 ; i < _currentBoardC.length; i++){
        if(_currentBoardC[i].piece == ''){
@@ -487,7 +475,7 @@ class GameBloc {
 
   int _checkWinMove(piece){
     
-    List<int> emptyPos = _emptyPositionOnBoard();
+    List<int> emptyPos = _emptyBoardPositions();
 
     List<GamePiece> testBoard = []..addAll(_currentBoardC);
     for(int i = 0 ; i < emptyPos.length; i++){
