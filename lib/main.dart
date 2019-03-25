@@ -14,10 +14,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
 
     UserService userService = UserService();
-
-    return BlocProvider(
-        gameBloc: GameBloc(gameService: GameService(), userService: userService),
-        userBloc: UserBloc(userService: userService),
+    return BlocProvider<UserBloc>(
+      bloc: UserBloc(userService: userService),
+      child: BlocProvider<GameBloc>(
+        bloc: GameBloc(gameService: GameService(), userService: userService),
         child: MaterialApp(
       title: 'Flutter Demo',
       theme: new ThemeData(
@@ -35,6 +35,10 @@ class MyApp extends StatelessWidget {
       ),
       home:MenuPage(),
     ),
-    );
+      ),
+    )
+
+
+      ;
   }
 }

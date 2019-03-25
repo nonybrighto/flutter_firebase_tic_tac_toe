@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter_firebase_tic_tac_toe/bloc/bloc_provider.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/auth.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/bloc_completer.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/load_status.dart';
@@ -8,7 +9,7 @@ import 'package:rxdart/rxdart.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/User.dart';
 
 
-class AuthBloc{
+class AuthBloc extends BlocBase{
 
   BlocCompleter completer;
 
@@ -81,12 +82,14 @@ try{
 
     }
 
-    close(){
-      _currentUserSubject.close();
-      _socialLoginSubject.close();
-      _loadStatusSubject.close();
-      _signUpSubject.close();
-      _loginSubject.close();
-    }
+  @override
+  void dispose() {
+     _currentUserSubject.close();
+    _socialLoginSubject.close();
+    _loadStatusSubject.close();
+    _signUpSubject.close();
+    _loginSubject.close();
+  }
+
 
 }

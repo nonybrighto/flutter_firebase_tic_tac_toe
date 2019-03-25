@@ -33,17 +33,30 @@ class _AuthPageState extends State<AuthPage> implements BlocCompleter<User> {
 
   bool signUp = false;
 
+
+   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _userBloc = BlocProvider.of<UserBloc>(context);
+    _authBloc = AuthBloc(new UserService(), this);
+  }
+
   @override
   void initState() {
     super.initState();
-    _authBloc = AuthBloc(new UserService(), this);
+   
     _validator = Validator();
     signUp = widget.signUp;
   }
 
   @override
+  void dispose() {
+    super.dispose();
+    _authBloc.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    _userBloc = BlocProvider.of(context).userBloc;
     return Scaffold(
       body: Builder(
         builder: (context) {

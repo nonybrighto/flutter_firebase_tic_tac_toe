@@ -24,6 +24,14 @@ class _GameBoardState extends State<GameBoard> with TickerProviderStateMixin {
    Animation<double> _boxScale;
 
 
+    @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _gameBloc = BlocProvider.of<GameBloc>(context);
+
+  }
+
+
    @override
   void initState() {
     super.initState();
@@ -46,11 +54,11 @@ class _GameBoardState extends State<GameBoard> with TickerProviderStateMixin {
   void dispose() {
     super.dispose();
     _opacityController.dispose();
+    _boxController.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    _gameBloc = BlocProvider.of(context).gameBloc;
     return WillPopScope(
         onWillPop: _cancelGameDialog,
         child: Scaffold(

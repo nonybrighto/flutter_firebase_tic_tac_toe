@@ -1,11 +1,12 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_firebase_tic_tac_toe/bloc/bloc_provider.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/User.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/score_detail.dart';
 import 'package:rxdart/rxdart.dart';
 
-class HighScoreBloc{
+class HighScoreBloc extends BlocBase{
 
  final _highscores  = BehaviorSubject<List<ScoreDetail>>(seedValue:  []);
  final _fetchHighScores = BehaviorSubject<Null>();
@@ -41,7 +42,8 @@ class HighScoreBloc{
   }
 
 
-  close(){
+  @override
+  void dispose() {
     _highscores.close();
     _fetchHighScores.close();
   }

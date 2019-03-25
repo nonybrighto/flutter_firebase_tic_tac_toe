@@ -20,6 +20,12 @@ class _HighScoreBoardState extends State<HighScoreBoard> {
   }
 
   @override
+  void dispose() {
+    super.dispose();
+    _highScoreBloc.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
 
     return Scaffold(

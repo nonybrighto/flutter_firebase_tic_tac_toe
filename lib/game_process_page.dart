@@ -14,9 +14,15 @@ class _GameProcessPageState extends State<GameProcessPage> {
 
   GameBloc _gameBloc;
 
+   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _gameBloc = BlocProvider.of<GameBloc>(context);
+
+  }
+
   @override
   Widget build(BuildContext context) {
-    _gameBloc = BlocProvider.of(context).gameBloc;
     return Scaffold(
 
       body:Padding(

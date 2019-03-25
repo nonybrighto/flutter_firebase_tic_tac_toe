@@ -1,17 +1,58 @@
-
 import 'package:flutter/material.dart';
-import 'package:flutter_firebase_tic_tac_toe/bloc/game_bloc.dart';
-import 'package:flutter_firebase_tic_tac_toe/bloc/user_bloc.dart';
 
-class BlocProvider extends InheritedWidget { 
+Type _typeOf<T>() => T;
 
-  final GameBloc gameBloc;
-  final UserBloc userBloc;
-  BlocProvider({Key key, this.gameBloc, this.userBloc, Widget child}) : super(key: key, child: child);
+abstract class BlocBase {
+	void dispose();
+}
 
-  bool updateShouldNotify(_) => true;
+class BlocProvider<T extends BlocBase> extends StatefulWidget {
+	BlocProvider({
+		Key key,
+		@required this.child,
+		@required this.bloc,
+	}): super(key: key);
 
-  static BlocProvider of(BuildContext context) {
-    return (context.inheritFromWidgetOfExactType(BlocProvider) as BlocProvider);
-  }
+	final Widget child;
+	final T bloc;
+
+	@override
+	_BlocProviderState<T> createState() => _BlocProviderState<T>();
+
+	static T of<T extends BlocBase>(BuildContext context){
+		final type = _typeOf<_BlocProviderInherited<T>>();
+		_BlocProviderInherited<T> provider =
+				context.ancestorInheritedElementForWidgetOfExactType(type)?.widget;
+		return provider?.bloc;
+	}
+}
+
+class _BlocProviderState<T extends BlocBase> extends State<BlocProvider<T>>{
+	@override
+	void dispose(){
+    print('disposed');
+		widget.bloc?.dispose();
+		super.dispose();
+	}
+
+	@override
+	Widget build(BuildContext context){
+		return new _BlocProviderInherited<T>(
+			bloc: widget.bloc,
+			child: widget.child,
+		);
+	}
+}
+
+class _BlocProviderInherited<T> extends InheritedWidget {
+	_BlocProviderInherited({
+		Key key,
+		@required Widget child,
+		@required this.bloc,
+	}) : super(key: key, child: child);
+
+	final T bloc;
+
+	@override
+	bool updateShouldNotify(_BlocProviderInherited oldWidget) => false;
 }

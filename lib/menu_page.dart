@@ -30,6 +30,15 @@ class _MenuPageState extends State<MenuPage>
   Animation<double> _bigLetterScale;
   List<Animation<double>> _menuButtonSlides;
 
+
+  @override
+  void didChangeDependencies() {
+    // TODO: implement didChangeDependencies
+    super.didChangeDependencies();
+     _userBloc = BlocProvider.of<UserBloc>(context);
+    _gameBloc = BlocProvider.of<GameBloc>(context);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -108,8 +117,6 @@ class _MenuPageState extends State<MenuPage>
 
   @override
   Widget build(BuildContext context) {
-    _userBloc = BlocProvider.of(context).userBloc;
-    _gameBloc = BlocProvider.of(context).gameBloc;
     return Scaffold(
       backgroundColor: Color(0XFF212845),
       body: Stack(

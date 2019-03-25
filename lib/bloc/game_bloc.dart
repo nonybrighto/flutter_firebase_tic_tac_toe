@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:math';
 
+import 'package:flutter_firebase_tic_tac_toe/bloc/bloc_provider.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/User.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/game.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/game_piece.dart';
@@ -11,7 +12,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_firebase_tic_tac_toe/services/user_service.dart';
 import 'package:rxdart/rxdart.dart';
 
-class GameBloc {
+class GameBloc extends BlocBase{
   final GameService gameService;
   final UserService userService;
   StreamSubscription<DocumentSnapshot> _serverGameSub;
@@ -486,7 +487,9 @@ class GameBloc {
     return null;
   }
 
-  close() {
+
+  @override
+  void dispose() {
     _gameMessageSubject.close();
     _currentBoardSubject.close();
     _currentPlayerSubject.close();

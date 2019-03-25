@@ -1,12 +1,13 @@
 import 'dart:async';
 
+import 'package:flutter_firebase_tic_tac_toe/bloc/bloc_provider.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/User.dart';
 import 'package:flutter_firebase_tic_tac_toe/services/user_service.dart';
 import 'package:flutter_firebase_tic_tac_toe/utils/user_util.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class UserBloc{
+class UserBloc extends BlocBase{
 
   final UserService userService;
 
@@ -79,7 +80,9 @@ class UserBloc{
 
   }
 
-  close(){
+
+  @override
+  void dispose() {
     _currentUserSubject.close();
     _getUsersSubject.close();
     _getUsersSubject.close();

@@ -19,12 +19,18 @@ class _UsersBoardState extends State<UsersBoard> {
 
   UserBloc _userBloc;
   GameBloc _gameBloc;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _userBloc = BlocProvider.of<UserBloc>(context);
+    _gameBloc = BlocProvider.of<GameBloc>(context);
+
+  }
   
   @override
   Widget build(BuildContext context) {
 
-    _userBloc = BlocProvider.of(context).userBloc;
-    _gameBloc = BlocProvider.of(context).gameBloc;
 
     return StreamBuilder<User>(
       stream: _userBloc.currentUser,
