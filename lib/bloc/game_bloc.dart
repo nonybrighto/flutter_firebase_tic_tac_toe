@@ -78,21 +78,11 @@ class GameBloc extends BlocBase {
       _gameOver = gameOver;
     });
 
-    final playDetails = Observable.combineLatest3(
-        _player1Subject, _player2Subject, _currentPlayerSubject,
-        (player1, player2, currentPlayer) {
-      return {
-        'player1': player1,
-        'player2': player2,
-        'currentPlayer': currentPlayer
-      };
-    });
-
     _startSingleDeviceGame.stream.listen(_handleStartSingleDeviceGame);
 
-    _playPiece.withLatestFrom(playDetails,
-        (int position, Map<String, dynamic> playDetails) {
-      return {}..addAll(playDetails)..addAll({'position': position});
+    _playPiece.withLatestFrom(_currentPlayerSubject,
+        (int position, Player currentPlayer) {
+      return {'position': position, 'currentPlayer':currentPlayer};
     }).listen(_handlePlayPiece);
 
     _cancelGameSubject.listen(_handleCancelGame);
@@ -151,8 +141,10 @@ class GameBloc extends BlocBase {
   }
 
   _handlePlayPiece(details) async {
-    Player player1 = details['player1'];
-    Player player2 = details['player2'];
+
+    List<Player> players = await _getPlayers();
+    Player player1 = players[0];
+    Player player2 = players[1];
     int position = details['position'];
     Player currentPlayer = details['currentPlayer'];
     User currentUser = await userService.getCurrentUser();
@@ -273,9 +265,9 @@ class GameBloc extends BlocBase {
         .listen((snapshot) async {
       Map<String, dynamic> gameData = snapshot.data;
 
-      _drawNetworkPlayer(gameData['player1'], _player1Subject);
-      _drawNetworkPlayer(gameData['player2'], _player2Subject);
-      _drawNetworkBoard(gameData['pieces']);
+      _setNetworkPlayer(gameData['player1'], _player1Subject);
+      _setNetworkPlayer(gameData['player2'], _player2Subject);
+      _setNetworkBoard(gameData['pieces']);
 
       if (gameData['winner'].isNotEmpty && gameData['winner'] != 'tie') {
         Player gameWinner = await _getPlayerFromId(gameData['winner']);
@@ -394,7 +386,7 @@ class GameBloc extends BlocBase {
     });
   }
 
-  _drawNetworkPlayer(Map player, playerSubject) {
+  _setNetworkPlayer(Map player, playerSubject) {
     Player gottenPlayer = Player(
         gamePiece:
             GamePiece(piece: player['gamePiece'], pieceType: PieceType.normal),
@@ -419,7 +411,7 @@ class GameBloc extends BlocBase {
     }).first;
   }
 
-  _drawNetworkBoard(Map networkPieces) {
+  _setNetworkBoard(Map networkPieces) {
     //Added this bcus the map gotten from firebase is not in a specific order.
     final sortedMap = SplayTreeMap<dynamic, dynamic>();
     sortedMap.addAll(networkPieces);
