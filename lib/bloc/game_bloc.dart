@@ -30,7 +30,7 @@ class GameBloc extends BlocBase {
   final _replayCurrentGameSubject = BehaviorSubject<Null>();
   final _handleChallengeSubject = BehaviorSubject<Map>();
   final _gameOverSubject = BehaviorSubject<bool>();
-  final _playPiece = BehaviorSubject<int>();
+  final _playPiece = BehaviorSubject<Map<String, dynamic>>();
   final _multiNetworkMessage =
       BehaviorSubject<String>(seedValue: 'Tic Tac Toe ...');
   final _multiNetworkStarted = BehaviorSubject<bool>();
@@ -41,7 +41,7 @@ class GameBloc extends BlocBase {
   final _startServerGame = BehaviorSubject<Map<String, String>>();
 
   //sink
-  Function(int) get playPiece => (position) => _playPiece.sink.add(position);
+  Function(int, bool) get playPiece => (position, isAuto) => _playPiece.sink.add({'position':position, 'isAuto': isAuto});
   Function() get cancelGame => () => _cancelGameSubject.sink.add(null);
   Function() get replayCurrentGame =>
       () => _replayCurrentGameSubject.sink.add(null);
@@ -81,8 +81,9 @@ class GameBloc extends BlocBase {
     _startSingleDeviceGame.stream.listen(_handleStartSingleDeviceGame);
 
     _playPiece.withLatestFrom(_currentPlayerSubject,
-        (int position, Player currentPlayer) {
-      return {'position': position, 'currentPlayer':currentPlayer};
+        (Map<String, dynamic> playDetails, Player currentPlayer) {
+     // return {'position': position, 'currentPlayer':currentPlayer};
+      return {}..addAll(playDetails)..addAll({'currentPlayer':currentPlayer});
     }).listen(_handlePlayPiece);
 
     _cancelGameSubject.listen(_handleCancelGame);
@@ -147,6 +148,8 @@ class GameBloc extends BlocBase {
     Player player2 = players[1];
     int position = details['position'];
     Player currentPlayer = details['currentPlayer'];
+    bool isAuto = details['isAuto'];
+
     User currentUser = await userService.getCurrentUser();
 
     if (_currentBoardC[position].piece.isEmpty && !_gameOver) {
@@ -171,6 +174,7 @@ class GameBloc extends BlocBase {
           });
         }
       } else {
+        if(_gameType == GameType.multi_device || isAuto || (currentPlayer.user.id == 'User')){
         _currentBoardC[position] = currentPlayer.gamePiece;
         final List<int> winLine =
             _getWinLine(_currentBoardC, currentPlayer.gamePiece.piece);
@@ -206,6 +210,7 @@ class GameBloc extends BlocBase {
           }
         }
         _currentBoardSubject.sink.add(_currentBoardC);
+      }
       }
     }
   }
@@ -302,8 +307,9 @@ class GameBloc extends BlocBase {
   _playComputerPiece() {
     Future.delayed(Duration(seconds: 1), () async {
       int bestPostion = await _getComputerPlayPosition();
-      //playPiece(bestPostion, true);
-      _playPiece.sink.add(bestPostion);
+      playPiece(bestPostion, true);
+     // _playPiece.sink.add({'position': bestPostion , 'isAuto': true});
+      
     });
   }
 

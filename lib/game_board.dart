@@ -254,7 +254,7 @@ class _GameBoardState extends State<GameBoard> with TickerProviderStateMixin {
           )),
         ),
         onTap: () {
-          _gameBloc.playPiece(position);
+          _gameBloc.playPiece(position, false);
         },
       );
   }
