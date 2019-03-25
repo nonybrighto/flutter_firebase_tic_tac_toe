@@ -28,7 +28,7 @@ class UserBloc extends BlocBase{
 
   UserBloc({this.userService}){
 
-
+    //Get the user on app start up
     userService.getCurrentUser().then((user){
         if(user != null){
             _currentUserSubject.sink.add(user);
@@ -37,7 +37,15 @@ class UserBloc extends BlocBase{
         }
     });
 
-   _getUsersSubject.stream.listen((_) async{
+   _getUsersSubject.stream.listen(_handleGetUsers);
+
+   _changeFcmTokenSubject.listen(_handleChangeFcmToken); 
+
+  _logoutUser.stream.listen(_handleLogout); 
+
+  }
+
+  _handleGetUsers(_) async{
           
          User currentUser = await userService.getCurrentUser();
 
@@ -57,9 +65,10 @@ class UserBloc extends BlocBase{
                _usersSubject.sink.add(users);
           });
 
-   });
+   }
 
-   _changeFcmTokenSubject.listen((token) async{
+
+  _handleChangeFcmToken(token) async{
         
           User currentUser = await userService.getCurrentUser();
 
@@ -70,13 +79,11 @@ class UserBloc extends BlocBase{
           }
 
           userService.saveUserFcmTokenToPreference(token);
-   }); 
+   }
 
-  _logoutUser.stream.listen((_){
+  _handleLogout(_){
       userService.logoutUser();
       _currentUserSubject.sink.add(null);
-
-  }); 
 
   }
 

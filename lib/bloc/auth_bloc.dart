@@ -11,6 +11,7 @@ import 'package:flutter_firebase_tic_tac_toe/models/User.dart';
 
 class AuthBloc extends BlocBase{
 
+  UserService userService;
   BlocCompleter completer;
 
     final _currentUserSubject = BehaviorSubject<User>(seedValue: null);
@@ -28,7 +29,15 @@ class AuthBloc extends BlocBase{
 
     AuthBloc(UserService userService, this.completer){
 
-        _socialLoginSubject.stream.listen((SocialLoginType socialLoginType) async {
+        _socialLoginSubject.stream.listen(_handleSocialLogin);
+
+        _loginSubject.stream.listen(_handleLogin);
+
+        _signUpSubject.stream.listen(_handleSignUp);
+
+    }
+
+    _handleSocialLogin(SocialLoginType socialLoginType) async {
           _loadStatusSubject.sink.add(LoadStatus.loading);
           if(socialLoginType == SocialLoginType.facebook){
             try{
@@ -52,9 +61,9 @@ class AuthBloc extends BlocBase{
                   completer.error(appError);
               }
           }
-        });
+        }
 
-        _loginSubject.stream.listen((Map loginCredential) async{
+    _handleLogin(Map loginCredential) async{
           _loadStatusSubject.sink.add(LoadStatus.loading);
 try{
              User user =  await userService.signInWithEmailAndPasword(loginCredential['email'], loginCredential['password']);
@@ -64,9 +73,9 @@ try{
                _loadStatusSubject.sink.add(LoadStatus.loaded);
                 completer.error(appError);
             }
-        });
+        }
 
-        _signUpSubject.stream.listen((Map signUpCredential) async {
+    _handleSignUp(Map signUpCredential) async {
           _loadStatusSubject.sink.add(LoadStatus.loading);
 
             try{
@@ -78,9 +87,7 @@ try{
                _loadStatusSubject.sink.add(LoadStatus.loaded);
                 completer.error(appError);
             }
-        });
-
-    }
+        }
 
   @override
   void dispose() {
