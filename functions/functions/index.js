@@ -53,7 +53,6 @@ exports.handleChallenge = functions.https.onRequest(async (request, response) =>
         let docSnapshot = admin.firestore().collection('games').doc(gameId).get();
         if(!docSnapshot.exists || (docSnapshot.exists && docSnapshot.data().winner !== '')){
             await _createGame(gameId, receiverId, receiverName, receiverFcmToken, senderId, senderName, senderFcmToken);
-            await admin.messaging().subscribeToTopic([senderFcmToken, receiverFcmToken], gameId);
             notificationMessage = 'Your game has been started!!!';
         }else{
             notificationMessage = 'Your game is being continued!!!';
@@ -77,7 +76,7 @@ exports.handleChallenge = functions.https.onRequest(async (request, response) =>
                 body: notificationMessage
             }
         };
-        await admin.messaging().sendToTopic(gameId, message);
+        await admin.messaging().sendToDevice([senderFcmToken, receiverFcmToken], message);
         return response.send(true);
 
        }catch(err){
@@ -204,6 +203,8 @@ exports.replayGame = functions.https.onRequest(async(request, response) => {
 
         let gameId = request.query.gameId;
         let playerId = request.query.playerId;
+        let player1FcmToken = request.query.player1FcmToken;
+        let player2FcmToken = request.query.player2FcmToken;
 
         let game = await admin.firestore().collection('games').doc(gameId).get();
         if (game.exists) {
@@ -239,7 +240,7 @@ exports.replayGame = functions.https.onRequest(async(request, response) => {
                     // }
 
                 };
-                await admin.messaging().sendToTopic(gameId, message);
+               await admin.messaging().sendToDevice([player1FcmToken, player2FcmToken], message);
                 console.log('sent to gameId'+ gameId);
                 return response.send(true);
 
@@ -264,6 +265,8 @@ exports.cancelGame = functions.https.onRequest(async(request, response) => {
     try{
         let gameId = request.query.gameId;
         let playerId = request.query.playerId;
+        let player1FcmToken = request.query.player1FcmToken;
+        let player2FcmToken = request.query.player2FcmToken;
     
         let game = await admin.firestore().collection('games').doc(gameId).get();
         if (game.exists) {
@@ -286,7 +289,8 @@ exports.cancelGame = functions.https.onRequest(async(request, response) => {
                         body: `Your game( ${player1.user.name} vs ${player2.user.name}) has been ended!!!`
                     }
                 };
-                await Promise.all([admin.messaging().sendToTopic(gameId, message),
+                await Promise.all([
+                                admin.messaging().sendToDevice([player1FcmToken, player2FcmToken], message),
                                 _changeUserState(player1.user.id, 'available'),
                                 _changeUserState(player2.user.id, 'available'),
                                 _changeGamePlayersState(player1.user.id,player2.user.id,'available')
