@@ -21,7 +21,7 @@ Tic Tac Toe app is designed using the following:
 <img src="screenshots/play_with_friend.gif" />
 
 ## Play with Registered User
-<img src="screenshots/one_player.gif" width="33%"/><img src="screenshots/two_player.gif" width="33%"/>
+<img src="screenshots/one_player.gif" width="33%"/>  <img src="screenshots/two_player.gif" width="33%"/>
 
 ## Authentication Page
 <img src="screenshots/auth_page.gif" />
