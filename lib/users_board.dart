@@ -6,6 +6,7 @@ import 'package:flutter_firebase_tic_tac_toe/bloc/user_bloc.dart';
 import 'package:flutter_firebase_tic_tac_toe/game_process_page.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/User.dart';
 import 'package:flutter_firebase_tic_tac_toe/models/game.dart';
+import 'package:flutter_firebase_tic_tac_toe/utils/user_util.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class UsersBoard extends StatefulWidget {
@@ -67,34 +68,13 @@ class _UsersBoardState extends State<UsersBoard> {
       trailing: _userStateDisplay(user.currentState),  
       ),
       onTap: (){
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-                title: Text('Send Challenge'),
-                content: Text('Do you want to challenge '+user.name),
-                actions: <Widget>[
-                  FlatButton(
-                    child: Text('CHALLENGE'),
-                    onPressed: () async{
-                        if(currentUser != null){
-                          _gameBloc.handleChallenge(user, ChallengeHandleType.challenge);
-                          Navigator.pop(context);
-                          Navigator.of(context).push(MaterialPageRoute(builder: (context) => GameProcessPage()));
-                        }else{
-                             Navigator.of(context).push(MaterialPageRoute(
-                                    builder: (index) => AuthPage(false)));
-                        }
-                    },
-                  ),
-                  FlatButton(
-                    child: Text('DECLINE'),
-                    onPressed: (){
-                      Navigator.pop(context);
-                    },
-                  )
-                ],
-          ),
-        );
+
+        if(user.currentState == UserState.available){
+            _showSendChallengeDialog(user, currentUser);
+        }else{
+            _showCantPlayDialog(user);
+        }
+        
       },
     );
   }
@@ -123,5 +103,55 @@ class _UsersBoardState extends State<UsersBoard> {
             backgroundColor: color,
             radius: 10.0,
           );
+  }
+
+  _showSendChallengeDialog(User user, User currentUser){
+    showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+                title: Text('Send Challenge'),
+                content: Text('Do you want to challenge '+user.name),
+                actions: <Widget>[
+                  FlatButton(
+                    child: Text('CHALLENGE'),
+                    onPressed: () async{
+                        if(currentUser != null){
+                          _gameBloc.handleChallenge(user, ChallengeHandleType.challenge);
+                          Navigator.pop(context);
+                          Navigator.of(context).push(MaterialPageRoute(builder: (context) => GameProcessPage()));
+                        }else{
+                             Navigator.of(context).push(MaterialPageRoute(
+                                    builder: (index) => AuthPage(false)));
+                        }
+                    },
+                  ),
+                  FlatButton(
+                    child: Text('DECLINE'),
+                    onPressed: (){
+                      Navigator.pop(context);
+                    },
+                  )
+                ],
+          ),
+        );
+  }
+
+  _showCantPlayDialog(User user){
+    UserUtil userUtil = UserUtil();
+    showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+                title: Text("Can't Play"),
+                content: Text("Can't play with "+user.name+", user is currently "+userUtil.getStringFromState(user.currentState) ),
+                actions: <Widget>[
+                  FlatButton(
+                    child: Text('OK'),
+                    onPressed: () async{
+                        Navigator.of(context).pop();
+                    },
+                  ),
+                ],
+          ),
+        );
   }
 }
