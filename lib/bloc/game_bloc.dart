@@ -222,7 +222,7 @@ class GameBloc extends BlocBase {
       String gameId = players[0].user.id + '_' + players[1].user.id;
       User currentUser = await userService.getCurrentUser();
       try {
-        gameService.cancelGame(gameId, currentUser.id);
+        gameService.cancelGame(gameId, currentUser.id,  players[0].user.fcmToken, players[1].user.fcmToken);
         _serverGameSub.cancel();
       } catch (err) {
         print(err);
@@ -239,7 +239,7 @@ class GameBloc extends BlocBase {
       User currentUser = await userService.getCurrentUser();
 
       try {
-        await gameService.replayGame(gameId, currentUser.id);
+        await gameService.replayGame(gameId, currentUser.id, players[0].user.fcmToken, players[1].user.fcmToken);
       } catch (err) {
         print(err);
       }

@@ -11,7 +11,9 @@ class GameService{
 
 
     String handleTypeString = handleType.toString().split('.').last; //remove from here...
-    String url = 'https://us-central1-tic-tac-toe-a69ee.cloudfunctions.net/handleChallenge?senderId='+sender.id+'&senderName='+sender.name+'&senderFcmToken='+sender.fcmToken+'&receiverId='+receiver.id+'&receiverName='+receiver.name+'&receiverFcmToken='+receiver.fcmToken+'&handleType='+handleTypeString; 
+    String url = 'https://us-central1-tic-tac-toe-a69ee.cloudfunctions.net/handleChallenge?senderId='+sender.id+
+                '&senderName='+sender.name+'&senderFcmToken='+sender.fcmToken+'&receiverId='+receiver.id+'&receiverName='+
+                 receiver.name+'&receiverFcmToken='+receiver.fcmToken+'&handleType='+handleTypeString; 
     return _sendGetRequest(url);
 
   }
@@ -22,16 +24,18 @@ class GameService{
     return _sendGetRequest(url);
 }
 
- Future<bool> replayGame(String gameId, String playerId) async{
+ Future<bool> replayGame(String gameId, String playerId, String player1FcmToken, String player2FcmToken) async{
 
-    String url = 'https://us-central1-tic-tac-toe-a69ee.cloudfunctions.net/replayGame?gameId='+gameId+'&playerId='+playerId;
+    String url = 'https://us-central1-tic-tac-toe-a69ee.cloudfunctions.net/replayGame?gameId='+gameId+'&playerId='+playerId+
+                  '&player1FcmToken='+player1FcmToken+'&player2FcmToken='+player2FcmToken;
     return _sendGetRequest(url);
 
 }
 
-Future<bool> cancelGame(String gameId, String playerId) async{
+Future<bool> cancelGame(String gameId, String playerId, String player1FcmToken, String player2FcmToken) async{
 
-    String url = 'https://us-central1-tic-tac-toe-a69ee.cloudfunctions.net/cancelGame?gameId='+gameId+'&playerId='+playerId;
+    String url = 'https://us-central1-tic-tac-toe-a69ee.cloudfunctions.net/cancelGame?gameId='+gameId+'&playerId='+playerId+
+                  '&player1FcmToken='+player1FcmToken+'&player2FcmToken='+player2FcmToken;
     return _sendGetRequest(url);
 
 
