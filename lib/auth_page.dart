@@ -38,7 +38,7 @@ class _AuthPageState extends State<AuthPage> implements BlocCompleter<User> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     _userBloc = BlocProvider.of<UserBloc>(context);
-    _authBloc = AuthBloc(new UserService(), this);
+    _authBloc = AuthBloc(UserService(), this);
   }
 
   @override

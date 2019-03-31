@@ -27,7 +27,7 @@ class AuthBloc extends BlocBase{
 
     Stream<LoadStatus> get loadStatus => _loadStatusSubject.stream;
 
-    AuthBloc(UserService userService, this.completer){
+    AuthBloc(this.userService, this.completer){
 
         _socialLoginSubject.stream.listen(_handleSocialLogin);
 
